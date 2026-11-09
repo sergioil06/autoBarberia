@@ -1,0 +1,27 @@
+---
+// Foto a todo el ancho con un recorte distinto para móvil y para escritorio.
+import { src, srcset, type FotoStock } from '../data/fotos';
+
+interface Props {
+  foto: FotoStock;
+  escritorio: number; // proporción, p. ej. 16 / 9
+  movil: number; // p. ej. 4 / 5
+  class?: string;
+  eager?: boolean;
+}
+const { foto, escritorio, movil, class: cls = '', eager = false } = Astro.props;
+---
+<picture class={cls}>
+  <source media="(min-width: 861px)" srcset={srcset(foto, escritorio, [1200, 1800, 2400])} sizes="100vw" />
+  <img
+    src={src(foto, movil, 1000)}
+    srcset={srcset(foto, movil, [600, 900, 1200])}
+    sizes="100vw"
+    width="1000"
+    height={Math.round(1000 / movil)}
+    alt={foto.alt}
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={eager ? 'high' : undefined}
+    decoding="async"
+  />
+</picture>

@@ -14,10 +14,16 @@ const u = (path: string) => `https://images.unsplash.com/${path}`;
 
 export const fotos = {
   hero: {
-    base: u('photo-1585581905588-9e91f63bdd47'),
-    alt: 'Barbero con gorra perfilando un corte con la máquina',
-    autor: 'André Reis',
-    autorUrl: 'https://unsplash.com/@andrereispt',
+    base: u('photo-1596728325488-58c87691e9af'),
+    alt: 'Barbero arreglando la barba de un cliente recostado en el sillón',
+    autor: 'Antonio Reynoso',
+    autorUrl: 'https://unsplash.com/@infantleon',
+  },
+  corte: {
+    base: u('photo-1593702275687-f8b402bf1fb5'),
+    alt: 'Degradado con raya marcada a navaja, de perfil',
+    autor: 'Michael DeMoya',
+    autorUrl: 'https://unsplash.com/@demoya',
   },
   servicios: {
     base: u('photo-1647140655214-e4a2d914971f'),

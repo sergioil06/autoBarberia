@@ -26,7 +26,9 @@ function ahoraEnGijon() {
 /* ───────── Abierto ahora ───────── */
 function estado(datos: Datos) {
   const { dia, min } = ahoraEnGijon();
-  const abreHoy = datos.diasAbierto == null || datos.diasAbierto.includes(dia);
+  // Sin días confirmados no se afirma «abierto ahora»: se muestra solo el horario.
+  if (datos.diasAbierto == null) return;
+  const abreHoy = datos.diasAbierto.includes(dia);
   const franjas = datos.franjas.map((f) => ({ a: aMin(f.desde), b: aMin(f.hasta) }));
   const actual = abreHoy ? franjas.find((f) => min >= f.a && min < f.b) : undefined;
   const siguiente = abreHoy ? franjas.find((f) => min < f.a) : undefined;

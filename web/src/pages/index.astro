@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Foto from '../components/Foto.astro';
+import FotoAncha from '../components/FotoAncha.astro';
 import Pendiente from '../components/Pendiente.astro';
 import { negocio, servicios, equipo } from '../data/negocio';
 import { fotos } from '../data/fotos';
@@ -11,6 +12,7 @@ const diaIdx = [1, 2, 3, 4, 5, 6, 0];
 const tel = negocio.telefono;
 const wa = negocio.whatsapp;
 const ig = negocio.instagram;
+const diasConfirmados = negocio.diasAbierto != null;
 
 const flecha = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
@@ -57,7 +59,8 @@ const datosReserva = JSON.stringify({
   <main id="contenido">
     <!-- HERO -->
     <section class="hero" id="inicio" aria-labelledby="t-hero">
-      <div class="wrap hero__grid">
+      <FotoAncha class="hero__bg" foto={fotos.hero} escritorio={16 / 9} movil={3 / 4} eager />
+      <div class="wrap hero__in">
         <div class="hero__copy">
           <h1 class="display hero__title" id="t-hero">
             <span class="hero__line"><span>Llano</span></span>
@@ -66,23 +69,22 @@ const datosReserva = JSON.stringify({
           <p class="lead" data-in style="--i:0">Corte y barba para hombre en la Calle Velázquez, Gijón.</p>
           <div class="hero__actions" data-in style="--i:1">
             <a class="btn btn--primary" href="#reserva" data-cta-hero>Reservar cita <Fragment set:html={flecha} /></a>
-            <a class="btn btn--ghost" href="#servicios">Ver precios</a>
+            <a class="link hero__precios" href="#servicios">Ver precios</a>
           </div>
           <p class="estado" data-estado data-in style="--i:2">
             <span class="estado__dot" aria-hidden="true"></span>
-            <span data-estado-texto>Hoy de <strong>{horarioTexto}</strong></span>
+            <span data-estado-texto>Horario <strong>{horarioTexto}</strong></span>
           </p>
         </div>
-        <Foto class="hero__photo" foto={fotos.hero} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" eager />
       </div>
     </section>
 
     <!-- RESERVA -->
-    <section class="sec" id="reserva" aria-labelledby="t-reserva">
+    <section class="sec sec--rojo" id="reserva" aria-labelledby="t-reserva">
       <div class="wrap">
         <div class="sec__head">
           <h2 class="h2" id="t-reserva">Reserva tu cita</h2>
-          <p class="lead">Tres pasos: servicio, barbero y hora.</p>
+          <p class="lead">Elige servicio, barbero y hora.</p>
         </div>
         <div class="reserva" data-reserva={datosReserva}>
           <ol class="pasos" aria-label="Pasos de la reserva">
@@ -99,7 +101,7 @@ const datosReserva = JSON.stringify({
                 {servicios.map((s) => (
                   <button class="opcion" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
                     <span>{s.nombre}</span>
-                    <small>{s.precio != null ? `${s.precio} €` : '[PENDIENTE €]'}</small>
+                    {s.precio != null ? <small class="etiqueta">{s.precio} €</small> : <Pendiente texto="PENDIENTE €" />}
                   </button>
                 ))}
               </div>
@@ -131,6 +133,7 @@ const datosReserva = JSON.stringify({
               <h3 class="h3 paso__titulo">Tu cita</h3>
               <dl class="resumen" data-resumen></dl>
               <p class="aviso">La reserva online está en camino: todavía no se envía. <span class="pend">[PENDIENTE] sistema de reservas</span></p>
+              <p class="muted alternativa">Mientras tanto, ven directamente: {negocio.calle}, {negocio.ciudad}. <a class="link" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar</a></p>
               <div class="paso__pie">
                 <button class="volver" type="button" data-volver>← Volver</button>
                 <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
@@ -170,11 +173,13 @@ const datosReserva = JSON.stringify({
     </section>
 
 
+    <FotoAncha class="corte" foto={fotos.corte} escritorio={21 / 9} movil={4 / 5} />
+
     <!-- TRABAJOS -->
     <section class="sec" id="trabajos" aria-labelledby="t-trabajos">
       <div class="wrap">
         <div class="sec__head">
-          <h2 class="h2" id="t-trabajos">Trabajos recientes</h2>
+          <h2 class="h2" id="t-trabajos">Así trabajamos</h2>
           {ig ? (
             <a class="link" href={`https://www.instagram.com/${ig}/`} rel="noopener" target="_blank">Más en Instagram @{ig}</a>
           ) : (
@@ -189,18 +194,6 @@ const datosReserva = JSON.stringify({
       </div>
     </section>
 
-    <!-- OPINIONES -->
-    <section class="sec" id="opiniones" aria-labelledby="t-opiniones">
-      <div class="wrap">
-        <div class="sec__head">
-          <h2 class="h2" id="t-opiniones">Opiniones</h2>
-        </div>
-        <div class="opiniones__vacio">
-          <p class="h3">Aquí irán las opiniones de vuestros clientes.</p>
-          <p class="muted"><Pendiente /> Añadir reseñas reales (por ejemplo, de Google) con el permiso del cliente. No se publican opiniones inventadas.</p>
-        </div>
-      </div>
-    </section>
 
     <!-- VISITA -->
     <section class="sec" id="visita" aria-labelledby="t-visita">
@@ -216,8 +209,9 @@ const datosReserva = JSON.stringify({
           <div>
             <p class="estado" data-estado style="margin-bottom:16px">
               <span class="estado__dot" aria-hidden="true"></span>
-              <span data-estado-texto>Hoy de <strong>{horarioTexto}</strong></span>
+              <span data-estado-texto>Horario <strong>{horarioTexto}</strong></span>
             </p>
+            {diasConfirmados ? (
             <dl class="horario" aria-label="Horario">
               {dias.map((d, i) => (
                 <div data-dia={diaIdx[i]}>
@@ -226,8 +220,12 @@ const datosReserva = JSON.stringify({
                 </div>
               ))}
             </dl>
-            {negocio.diasAbierto == null && (
-              <p class="small muted" style="margin-top:12px"><Pendiente /> Confirmar qué días abrís (y festivos).</p>
+            ) : (
+              <dl class="horario" aria-label="Horario">
+                <div><dt>Mañanas</dt><dd>{negocio.franjas[0].desde.replace(/^0/, '')}–{negocio.franjas[0].hasta}</dd></div>
+                <div><dt>Tardes</dt><dd>{negocio.franjas[1].desde}–{negocio.franjas[1].hasta}</dd></div>
+                <div><dt>Días</dt><dd><Pendiente texto="PENDIENTE días" /></dd></div>
+              </dl>
             )}
           </div>
           <div>
@@ -235,6 +233,7 @@ const datosReserva = JSON.stringify({
             <p class="muted">
               Teléfono: {tel ? <a class="link" href={`tel:${tel}`}>{tel}</a> : <Pendiente />}
             </p>
+            <p class="muted opiniones-nota">Opiniones de clientes: <Pendiente texto="PENDIENTE reseñas reales" /></p>
             <div class="visita__acciones">
               <a class="btn btn--ghost" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar <Fragment set:html={flecha} /></a>
               {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
@@ -258,7 +257,7 @@ const datosReserva = JSON.stringify({
           <p class="pie__titulo">Página</p>
           <ul class="pie__lista">
             <li><a href="#servicios">Servicios</a></li>
-                  <li><a href="#trabajos">Trabajos</a></li>
+            <li><a href="#trabajos">Trabajos</a></li>
             <li><a href="#reserva">Reservar</a></li>
           </ul>
         </div>
