@@ -77,6 +77,70 @@ const datosReserva = JSON.stringify({
       </div>
     </section>
 
+    <!-- RESERVA -->
+    <section class="sec" id="reserva" aria-labelledby="t-reserva">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-reserva">Reserva tu cita</h2>
+          <p class="lead">Tres pasos: servicio, barbero y hora.</p>
+        </div>
+        <div class="reserva" data-reserva={datosReserva}>
+          <ol class="pasos" aria-label="Pasos de la reserva">
+            <li data-paso-ind="1" data-estado="actual"><span>1</span><span>Servicio</span></li>
+            <li data-paso-ind="2"><span>2</span><span>Barbero</span></li>
+            <li data-paso-ind="3"><span>3</span><span>Día y hora</span></li>
+            <li data-paso-ind="4"><span>4</span><span>Confirmar</span></li>
+          </ol>
+
+          <div class="panel" aria-live="polite">
+            <div class="paso" data-paso="1">
+              <h3 class="h3 paso__titulo">¿Qué te hacemos?</h3>
+              <div class="opciones" role="group" aria-label="Servicio">
+                {servicios.map((s) => (
+                  <button class="opcion" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
+                    <span>{s.nombre}</span>
+                    <small>{s.precio != null ? `${s.precio} €` : '[PENDIENTE €]'}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div class="paso" data-paso="2" hidden>
+              <h3 class="h3 paso__titulo">¿Con quién?</h3>
+              <div class="opciones opciones--dos" role="group" aria-label="Barbero">
+                <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor="cualquiera">
+                  <span>Me da igual</span><small>El primero libre</small>
+                </button>
+                {equipo.map((b, i) => (
+                  <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor={b.id}>
+                    <span>{b.nombre ?? `Barbero ${i + 1}`}</span>
+                  </button>
+                ))}
+              </div>
+              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
+            </div>
+
+            <div class="paso" data-paso="3" hidden>
+              <h3 class="h3 paso__titulo">¿Cuándo?</h3>
+              <div class="dias" role="group" aria-label="Día" data-dias></div>
+              <div class="opciones opciones--dos" role="group" aria-label="Hora" data-horas></div>
+              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
+            </div>
+
+            <div class="paso" data-paso="4" hidden>
+              <h3 class="h3 paso__titulo">Tu cita</h3>
+              <dl class="resumen" data-resumen></dl>
+              <p class="aviso">La reserva online está en camino: todavía no se envía. <span class="pend">[PENDIENTE] sistema de reservas</span></p>
+              <div class="paso__pie">
+                <button class="volver" type="button" data-volver>← Volver</button>
+                <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- SERVICIOS -->
     <section class="sec" id="servicios" aria-labelledby="t-servicios">
       <div class="wrap">
@@ -180,69 +244,6 @@ const datosReserva = JSON.stringify({
       </div>
     </section>
 
-    <!-- RESERVA -->
-    <section class="sec" id="reserva" aria-labelledby="t-reserva">
-      <div class="wrap">
-        <div class="sec__head">
-          <h2 class="h2" id="t-reserva">Reserva tu cita</h2>
-          <p class="lead">Tres pasos: servicio, barbero y hora.</p>
-        </div>
-        <div class="reserva" data-reserva={datosReserva}>
-          <ol class="pasos" aria-label="Pasos de la reserva">
-            <li data-paso-ind="1" data-estado="actual"><span>1</span><span>Servicio</span></li>
-            <li data-paso-ind="2"><span>2</span><span>Barbero</span></li>
-            <li data-paso-ind="3"><span>3</span><span>Día y hora</span></li>
-            <li data-paso-ind="4"><span>4</span><span>Confirmar</span></li>
-          </ol>
-
-          <div class="panel" aria-live="polite">
-            <div class="paso" data-paso="1">
-              <h3 class="h3 paso__titulo">¿Qué te hacemos?</h3>
-              <div class="opciones" role="group" aria-label="Servicio">
-                {servicios.map((s) => (
-                  <button class="opcion" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
-                    <span>{s.nombre}</span>
-                    <small>{s.precio != null ? `${s.precio} €` : '[PENDIENTE €]'}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div class="paso" data-paso="2" hidden>
-              <h3 class="h3 paso__titulo">¿Con quién?</h3>
-              <div class="opciones opciones--dos" role="group" aria-label="Barbero">
-                <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor="cualquiera">
-                  <span>Me da igual</span><small>El primero libre</small>
-                </button>
-                {equipo.map((b, i) => (
-                  <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor={b.id}>
-                    <span>{b.nombre ?? `Barbero ${i + 1}`}</span>
-                  </button>
-                ))}
-              </div>
-              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
-            </div>
-
-            <div class="paso" data-paso="3" hidden>
-              <h3 class="h3 paso__titulo">¿Cuándo?</h3>
-              <div class="dias" role="group" aria-label="Día" data-dias></div>
-              <div class="opciones opciones--dos" role="group" aria-label="Hora" data-horas></div>
-              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
-            </div>
-
-            <div class="paso" data-paso="4" hidden>
-              <h3 class="h3 paso__titulo">Tu cita</h3>
-              <dl class="resumen" data-resumen></dl>
-              <p class="aviso">La reserva online está en camino: todavía no se envía. <span class="pend">[PENDIENTE] sistema de reservas</span></p>
-              <div class="paso__pie">
-                <button class="volver" type="button" data-volver>← Volver</button>
-                <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="pie">
