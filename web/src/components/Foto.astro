@@ -1,19 +1,33 @@
 ---
-// Hueco de fotografía. Con `src` muestra la foto real; sin ella, un marcador
-// visible con la foto que hay que hacer (lista de fotos del informe).
+// Hueco de fotografía. Con `foto` muestra la imagen; sin ella, un marcador
+// visible con la foto que hay que hacer.
+import { src as srcDe, srcset as srcsetDe, type FotoStock } from '../data/fotos';
+
 interface Props {
-  src?: string | null;
-  alt: string;
+  foto?: FotoStock | null;
   ratio?: string; // p. ej. '4 / 5'
-  falta: string; // qué foto hay que hacer
+  sizes?: string;
+  falta?: string;
   class?: string;
   eager?: boolean;
 }
-const { src, alt, ratio = '4 / 5', falta, class: cls = '', eager = false } = Astro.props;
+const { foto, ratio = '4 / 5', sizes = '(max-width: 860px) 100vw, 45vw', falta = '', class: cls = '', eager = false } = Astro.props;
+const [a, b] = ratio.split('/').map((n) => Number(n.trim()));
+const r = a / b;
 ---
-<figure class:list={['foto', cls, { 'foto--falta': !src }]} style={`--r: ${ratio}`}>
-  {src ? (
-    <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+<figure class:list={['foto', cls, { 'foto--falta': !foto }]} style={`--r: ${ratio}`}>
+  {foto ? (
+    <img
+      src={srcDe(foto, r)}
+      srcset={srcsetDe(foto, r)}
+      sizes={sizes}
+      width="1200"
+      height={Math.round(1200 / r)}
+      alt={foto.alt}
+      loading={eager ? 'eager' : 'lazy'}
+      fetchpriority={eager ? 'high' : undefined}
+      decoding="async"
+    />
   ) : (
     <div class="foto__falta" role="img" aria-label={`Foto pendiente: ${falta}`}>
       <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>

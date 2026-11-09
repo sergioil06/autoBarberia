@@ -371,7 +371,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 
 /* ───────── Fotos ───────── */
 .foto { position: relative; overflow: hidden; background: var(--surface); }
-.foto img { width: 100%; aspect-ratio: var(--r); object-fit: cover; }
+/* Un mismo tratamiento para todas: algo menos de saturación y más contraste, para que lean como una serie. */
+.foto img { width: 100%; aspect-ratio: var(--r); object-fit: cover; filter: saturate(0.82) contrast(1.06) brightness(0.96); }
 .foto__falta {
   aspect-ratio: var(--r);
   display: flex;
@@ -470,11 +471,15 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 .trabajos > :nth-child(1) { grid-column: span 5; grid-row: span 2; }
 .trabajos > :nth-child(2),
 .trabajos > :nth-child(3) { grid-column: span 7; }
-.trabajos > :nth-child(1) .foto__falta { height: 100%; aspect-ratio: auto; }
+.trabajos > :nth-child(1) .foto__falta,
+.trabajos > :nth-child(1) img { height: 100%; aspect-ratio: auto; }
 @media (max-width: 860px) {
   .trabajos { grid-template-columns: 1fr 1fr; }
   .trabajos > :nth-child(1) { grid-column: 1 / -1; grid-row: auto; }
-  .trabajos > :nth-child(1) .foto__falta { aspect-ratio: 4 / 5; }
+  .trabajos > :nth-child(1) .foto__falta,
+  .trabajos > :nth-child(1) img { aspect-ratio: 4 / 5; height: auto; }
+  .trabajos > :nth-child(2) img,
+  .trabajos > :nth-child(3) img { aspect-ratio: 1; }
   .trabajos > :nth-child(2),
   .trabajos > :nth-child(3) { grid-column: span 1; }
   .trabajos > :nth-child(2) .foto__falta,
@@ -656,7 +661,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
   font-size: var(--t-small);
 }
 .pie__legal nav { display: flex; gap: 24px; }
-.pie__legal a { text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.pie__legal nav a { text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.pie__legal span a { color: var(--ink-2); }
 @media (max-width: 860px) {
   .pie__grid { grid-template-columns: 1fr 1fr; }
   .pie__grid > :first-child { grid-column: 1 / -1; }

@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Foto from '../components/Foto.astro';
 import Pendiente from '../components/Pendiente.astro';
 import { negocio, servicios, equipo } from '../data/negocio';
+import { fotos } from '../data/fotos';
 
 const horarioTexto = negocio.franjas.map((f) => `${f.desde.replace(/^0/, '')}–${f.hasta}`).join(' · ');
 const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -72,7 +73,7 @@ const datosReserva = JSON.stringify({
             <span data-estado-texto>Hoy de <strong>{horarioTexto}</strong></span>
           </p>
         </div>
-        <Foto class="hero__photo" ratio="4 / 5" alt="" falta="Retrato vertical de un corte terminado en el sillón, luz natural" eager />
+        <Foto class="hero__photo" foto={fotos.hero} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" eager />
       </div>
     </section>
 
@@ -99,7 +100,7 @@ const datosReserva = JSON.stringify({
             </ul>
             <p class="servicios__nota"><Pendiente /> Confirmar la lista de servicios, la duración y los precios.</p>
           </div>
-          <Foto ratio="4 / 5" alt="" falta="Manos del barbero con la máquina, primer plano, fondo oscuro" />
+          <Foto foto={fotos.servicios} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" />
         </div>
       </div>
     </section>
@@ -117,9 +118,9 @@ const datosReserva = JSON.stringify({
           )}
         </div>
         <div class="trabajos">
-          <Foto ratio="4 / 5" alt="" falta="Degradado terminado, perfil, fondo liso" />
-          <Foto ratio="16 / 9" alt="" falta="Corte clásico con raya, de lado" />
-          <Foto ratio="16 / 9" alt="" falta="Barba perfilada, primer plano" />
+          <Foto foto={fotos.trabajo1} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" />
+          <Foto foto={fotos.trabajo2} ratio="16 / 9" sizes="(max-width: 860px) 50vw, 55vw" />
+          <Foto foto={fotos.trabajo3} ratio="16 / 9" sizes="(max-width: 860px) 50vw, 55vw" />
         </div>
       </div>
     </section>
@@ -271,6 +272,9 @@ const datosReserva = JSON.stringify({
       <p class="pie__nombre" aria-hidden="true">Llano Peluqueros</p>
       <div class="pie__legal">
         <span>© {new Date().getFullYear()} {negocio.nombre}</span>
+        <span>Fotos de {Object.values(fotos).map((f, i, all) => (
+          <>{i > 0 && (i === all.length - 1 ? ' y ' : ', ')}<a href={`${f.autorUrl}?utm_source=llano_peluqueros&utm_medium=referral`} rel="noopener" target="_blank">{f.autor}</a></>
+        ))} en <a href="https://unsplash.com/?utm_source=llano_peluqueros&utm_medium=referral" rel="noopener" target="_blank">Unsplash</a></span>
         <nav aria-label="Legal">
           <a href="/aviso-legal/">Aviso legal</a>
           <a href="/privacidad/">Privacidad</a>
