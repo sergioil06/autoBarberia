@@ -26,7 +26,6 @@ const datosReserva = JSON.stringify({
       <a class="nav__logo" href="#inicio" aria-label="Llano Peluqueros, inicio">Llano</a>
       <nav class="nav__links" aria-label="Principal">
         <a href="#servicios">Servicios</a>
-        <a href="#equipo">Equipo</a>
         <a href="#trabajos">Trabajos</a>
         <a href="#visita">Visítanos</a>
         <a class="btn btn--primary" href="#reserva">Reservar cita</a>
@@ -48,7 +47,6 @@ const datosReserva = JSON.stringify({
     </div>
     <ul class="menu__list">
       <li><a href="#servicios">Servicios</a></li>
-      <li><a href="#equipo">Equipo</a></li>
       <li><a href="#trabajos">Trabajos</a></li>
       <li><a href="#visita">Visítanos</a></li>
     </ul>
@@ -106,26 +104,6 @@ const datosReserva = JSON.stringify({
       </div>
     </section>
 
-    <!-- EQUIPO -->
-    <section class="sec" id="equipo" aria-labelledby="t-equipo">
-      <div class="wrap">
-        <div class="sec__head">
-          <h2 class="h2" id="t-equipo">El equipo</h2>
-          <p class="lead">Quién te va a cortar el pelo.</p>
-        </div>
-        <ul class="equipo">
-          {equipo.map((b, i) => (
-            <li class="barbero">
-              <Foto src={b.foto} ratio="4 / 5" alt={b.nombre ? `${b.nombre}, barbero de Llano Peluqueros` : ''} falta={`Retrato del barbero ${i + 1} en su puesto`} />
-              <div>
-                <h3 class="h3 barbero__nombre">{b.nombre ?? <>Barbero {i + 1} <Pendiente texto="PENDIENTE nombre" /></>}</h3>
-                <p class="muted">{b.especialidad ?? <Pendiente texto="PENDIENTE especialidad" />}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
 
     <!-- TRABAJOS -->
     <section class="sec" id="trabajos" aria-labelledby="t-trabajos">
@@ -278,8 +256,7 @@ const datosReserva = JSON.stringify({
           <p class="pie__titulo">Página</p>
           <ul class="pie__lista">
             <li><a href="#servicios">Servicios</a></li>
-            <li><a href="#equipo">Equipo</a></li>
-            <li><a href="#trabajos">Trabajos</a></li>
+                  <li><a href="#trabajos">Trabajos</a></li>
             <li><a href="#reserva">Reservar</a></li>
           </ul>
         </div>
