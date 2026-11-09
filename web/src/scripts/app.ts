@@ -84,6 +84,9 @@ function navegacion() {
     const s = document.querySelector(a.hash);
     if (s) io.observe(s);
   });
+  // Arriba del todo (hero) no se marca ninguna sección.
+  const hero = document.querySelector('#inicio');
+  if (hero) io.observe(hero);
 }
 
 /* ───────── Barra fija en móvil ───────── */
