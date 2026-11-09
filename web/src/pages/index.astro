@@ -24,7 +24,7 @@ const datosReserva = JSON.stringify({
 <Base>
   <header class="nav" data-nav>
     <div class="wrap nav__in">
-      <a class="nav__logo" href="#inicio" aria-label="Llano Peluqueros, inicio">Llano<span>.</span></a>
+      <a class="nav__logo" href="#inicio" aria-label="Llano Peluqueros, inicio">Llano</a>
       <nav class="nav__links" aria-label="Principal">
         <a href="#servicios">Servicios</a>
         <a href="#trabajos">Trabajos</a>
@@ -40,7 +40,7 @@ const datosReserva = JSON.stringify({
 
   <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menú" data-menu>
     <div class="menu__top">
-      <span class="nav__logo">Llano<span>.</span></span>
+      <span class="nav__logo">Llano</span>
       <button class="nav__menu" type="button" data-menu-cerrar>
         Cerrar
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -61,7 +61,7 @@ const datosReserva = JSON.stringify({
         <div class="hero__copy">
           <h1 class="display hero__title" id="t-hero">
             <span class="hero__line"><span>Llano</span></span>
-            <span class="hero__line"><span>Peluqueros<span class="acento">.</span></span></span>
+            <span class="hero__line"><span>Peluqueros</span></span>
           </h1>
           <p class="lead" data-in style="--i:0">Corte y barba para hombre en la Calle Velázquez, Gijón.</p>
           <div class="hero__actions" data-in style="--i:1">
@@ -76,21 +76,6 @@ const datosReserva = JSON.stringify({
         <Foto class="hero__photo" foto={fotos.hero} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" eager />
       </div>
     </section>
-
-    <div class="cinta" aria-hidden="true">
-      <div class="cinta__pista">
-        {[0, 1].map(() => (
-          <div class="cinta__grupo">
-            {['Corte', 'Degradado', 'Barba', 'Calle Velázquez 48', 'Gijón', '9:00–13:00 · 16:00–20:00'].map((t) => (
-              <>
-                <span>{t}</span>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
-              </>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
 
     <!-- RESERVA -->
     <section class="sec" id="reserva" aria-labelledby="t-reserva">
@@ -157,7 +142,7 @@ const datosReserva = JSON.stringify({
     </section>
 
     <!-- SERVICIOS -->
-    <section class="sec tema-claro" id="servicios" aria-labelledby="t-servicios">
+    <section class="sec" id="servicios" aria-labelledby="t-servicios">
       <div class="wrap">
         <div class="sec__head">
           <h2 class="h2" id="t-servicios">Servicios y precios</h2>

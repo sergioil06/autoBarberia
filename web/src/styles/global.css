@@ -15,13 +15,6 @@
   --open: #86d99a;
   --mark: #f4a261; /* solo marcadores [PENDIENTE] */
 
-  /* Color de marca: azul cobalto (guiño al azul del poste de barbero, sin el cliché). */
-  --accent: #2f4beb;
-  --accent-hover: #4560ff;
-  --on-accent: #ffffff;
-  --accent-soft: #9aaaff; /* el acento como texto sobre fondo oscuro */
-  --bone: #efebe4;
-
   --font: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
   --narrow: 62%;
   --semi: 82%;
@@ -71,7 +64,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-::selection { background: var(--accent); color: var(--on-accent); }
+::selection { background: var(--ink); color: var(--bg); }
 
 img { display: block; max-width: 100%; height: auto; }
 h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
@@ -81,7 +74,7 @@ button { font: inherit; color: inherit; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
 
 :focus-visible {
-  outline: 2px solid var(--accent-soft);
+  outline: 2px solid var(--ink);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -169,14 +162,14 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
     color 200ms ease;
 }
 .btn:active { transform: scale(0.97); }
-.btn--primary { background: var(--accent); color: var(--on-accent); }
+.btn--primary { background: var(--ink); color: var(--bg); }
 .btn--ghost { border-color: var(--line-strong); color: var(--ink); }
 .btn[aria-disabled='true'],
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .btn svg { transition: transform 200ms var(--ease-out); }
 
 @media (hover: hover) and (pointer: fine) {
-  .btn--primary:hover { background: var(--accent-hover); }
+  .btn--primary:hover { background: #fff; }
   .btn--ghost:hover { border-color: var(--ink); }
   .btn:hover svg { transform: translateX(3px); }
 }
@@ -211,7 +204,6 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
   justify-content: space-between;
   gap: 24px;
 }
-.nav__logo span { color: var(--accent-soft); }
 .nav__logo {
   font-stretch: var(--narrow);
   font-weight: 800;
@@ -229,22 +221,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
   text-decoration: none;
   transition: color 200ms ease;
 }
-.nav__links a:not(.btn) { position: relative; }
-.nav__links a:not(.btn)::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -10px;
-  width: 5px;
-  height: 5px;
-  margin-left: -2.5px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  transform: scale(0);
-  transition: transform 240ms var(--ease-out);
-}
 .nav__links a:not(.btn)[aria-current='true'] { color: var(--ink); }
-.nav__links a:not(.btn)[aria-current='true']::after { transform: scale(1); }
 @media (hover: hover) and (pointer: fine) {
   .nav__links a:not(.btn):hover { color: var(--ink); }
 }
@@ -276,8 +253,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
   display: flex;
   flex-direction: column;
   padding: 0 var(--gutter) calc(24px + env(safe-area-inset-bottom));
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--bg);
   overscroll-behavior: contain;
   opacity: 0;
   visibility: hidden;
@@ -308,10 +284,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 .menu[data-open] .menu__list li:nth-child(3) a { transition-delay: 80ms; }
 .menu[data-open] .menu__list li:nth-child(4) a { transition-delay: 120ms; }
 .menu[data-open] .menu__list li:nth-child(5) a { transition-delay: 160ms; }
-.menu .nav__logo span { color: inherit; }
-.menu__list a { display: flex !important; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgb(255 255 255 / 0.22); padding: 14px 0 !important; }
-.menu__list a::after { content: '→'; font-size: 0.5em; font-stretch: 100%; font-weight: 500; }
-.menu .btn { margin-top: auto; width: 100%; background: var(--bg); color: var(--ink); }
+.menu .btn { margin-top: auto; width: 100%; }
 
 /* ───────── Hero ───────── */
 .hero {
@@ -334,13 +307,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
   /* 4:5 y nunca más alta que la pantalla disponible */
   max-width: calc((100svh - var(--nav-h) - 140px) * 0.8);
 }
-.hero__title .acento { color: var(--accent-soft); }
 
 .estado {
-  justify-self: start;
-  padding: 8px 14px 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -734,58 +702,3 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 .legal { padding-block: var(--sec); max-width: 70ch; }
 .legal h1 { margin-bottom: 32px; }
 .legal p { margin-bottom: 16px; color: var(--ink-2); }
-
-/* ───────── Franja en movimiento ───────── */
-.cinta {
-  background: var(--accent);
-  color: var(--on-accent);
-  overflow: hidden;
-  padding-block: 18px;
-  user-select: none;
-}
-.cinta__pista {
-  display: flex;
-  width: max-content;
-  animation: cinta 40s linear infinite;
-}
-.cinta__grupo {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding-right: 32px;
-  font-stretch: var(--narrow);
-  font-weight: 800;
-  font-size: clamp(1.5rem, 3vw, 2.25rem);
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.cinta__grupo svg { flex: none; opacity: 0.7; }
-@media (hover: hover) and (pointer: fine) { .cinta:hover .cinta__pista { animation-play-state: paused; } }
-@keyframes cinta { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .cinta__pista { animation: none; } }
-
-/* ───────── Sección en claro ───────── */
-.tema-claro {
-  --bg: var(--bone);
-  --surface: #e4dfd6;
-  --surface-2: #d9d3c8;
-  --ink: #121110;
-  --ink-2: #4b4741;
-  --ink-3: #6a655d;
-  --line: rgb(18 17 16 / 0.14);
-  --line-strong: rgb(18 17 16 / 0.32);
-  --mark: #b4501a;
-  --accent-soft: var(--accent);
-  background: var(--bg);
-  color: var(--ink);
-  border-top: 0;
-}
-.tema-claro ::selection { background: var(--accent); color: var(--on-accent); }
-
-/* Reserva: acento en el paso actual y en la opción elegida */
-.pasos li[data-estado='actual'] span:first-child { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.opcion[aria-pressed='true'] { border-color: var(--accent-soft); }
-.fila__precio { color: var(--ink); }
-.tema-claro .fila:hover .fila__nombre { color: var(--accent); }
-.fila__nombre { transition: color 200ms ease; }
