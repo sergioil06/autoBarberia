@@ -1,0 +1,24 @@
+---
+// Hueco de fotografía. Con `src` muestra la foto real; sin ella, un marcador
+// visible con la foto que hay que hacer (lista de fotos del informe).
+interface Props {
+  src?: string | null;
+  alt: string;
+  ratio?: string; // p. ej. '4 / 5'
+  falta: string; // qué foto hay que hacer
+  class?: string;
+  eager?: boolean;
+}
+const { src, alt, ratio = '4 / 5', falta, class: cls = '', eager = false } = Astro.props;
+---
+<figure class:list={['foto', cls, { 'foto--falta': !src }]} style={`--r: ${ratio}`}>
+  {src ? (
+    <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  ) : (
+    <div class="foto__falta" role="img" aria-label={`Foto pendiente: ${falta}`}>
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      <span class="pend">[PENDIENTE] Foto</span>
+      <span class="foto__que">{falta}</span>
+    </div>
+  )}
+</figure>

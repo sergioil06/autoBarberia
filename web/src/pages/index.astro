@@ -1,0 +1,319 @@
+---
+import Base from '../layouts/Base.astro';
+import Foto from '../components/Foto.astro';
+import Pendiente from '../components/Pendiente.astro';
+import { negocio, servicios, equipo } from '../data/negocio';
+
+const horarioTexto = negocio.franjas.map((f) => `${f.desde.replace(/^0/, '')}–${f.hasta}`).join(' · ');
+const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const diaIdx = [1, 2, 3, 4, 5, 6, 0];
+const tel = negocio.telefono;
+const wa = negocio.whatsapp;
+const ig = negocio.instagram;
+
+const flecha = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+const datosReserva = JSON.stringify({
+  servicios: servicios.map((s) => ({ id: s.id, nombre: s.nombre, minutos: s.minutos, precio: s.precio })),
+  equipo: equipo.map((b, i) => ({ id: b.id, nombre: b.nombre ?? `Barbero ${i + 1}` })),
+  franjas: negocio.franjas,
+  diasAbierto: negocio.diasAbierto,
+});
+---
+<Base>
+  <header class="nav" data-nav>
+    <div class="wrap nav__in">
+      <a class="nav__logo" href="#inicio" aria-label="Llano Peluqueros, inicio">Llano</a>
+      <nav class="nav__links" aria-label="Principal">
+        <a href="#servicios">Servicios</a>
+        <a href="#equipo">Equipo</a>
+        <a href="#trabajos">Trabajos</a>
+        <a href="#visita">Visítanos</a>
+        <a class="btn btn--primary" href="#reserva">Reservar cita</a>
+      </nav>
+      <button class="nav__menu" type="button" aria-expanded="false" aria-controls="menu" data-menu-abrir>
+        Menú
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menú" data-menu>
+    <div class="menu__top">
+      <span class="nav__logo">Llano</span>
+      <button class="nav__menu" type="button" data-menu-cerrar>
+        Cerrar
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <ul class="menu__list">
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#equipo">Equipo</a></li>
+      <li><a href="#trabajos">Trabajos</a></li>
+      <li><a href="#visita">Visítanos</a></li>
+    </ul>
+    <a class="btn btn--primary" href="#reserva">Reservar cita</a>
+  </div>
+
+  <main id="contenido">
+    <!-- HERO -->
+    <section class="hero" id="inicio" aria-labelledby="t-hero">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <h1 class="display hero__title" id="t-hero">
+            <span class="hero__line"><span>Llano</span></span>
+            <span class="hero__line"><span>Peluqueros</span></span>
+          </h1>
+          <p class="lead" data-in style="--i:0">Corte y barba para hombre en la Calle Velázquez, Gijón.</p>
+          <div class="hero__actions" data-in style="--i:1">
+            <a class="btn btn--primary" href="#reserva" data-cta-hero>Reservar cita <Fragment set:html={flecha} /></a>
+            <a class="btn btn--ghost" href="#servicios">Ver precios</a>
+          </div>
+          <p class="estado" data-estado data-in style="--i:2">
+            <span class="estado__dot" aria-hidden="true"></span>
+            <span data-estado-texto>Hoy de <strong>{horarioTexto}</strong></span>
+          </p>
+        </div>
+        <Foto class="hero__photo" ratio="4 / 5" alt="" falta="Retrato vertical de un corte terminado en el sillón, luz natural" eager />
+      </div>
+    </section>
+
+    <!-- SERVICIOS -->
+    <section class="sec" id="servicios" aria-labelledby="t-servicios">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-servicios">Servicios y precios</h2>
+          <p class="lead">Elige uno y te llevamos directo a la reserva.</p>
+        </div>
+        <div class="servicios">
+          <div>
+            <ul class="filas">
+              {servicios.map((s) => (
+                <li>
+                  <button class="fila" type="button" data-elegir-servicio={s.id}>
+                    <span class="fila__nombre">{s.nombre}</span>
+                    <span class="fila__dur">{s.minutos ? `${s.minutos} min` : <Pendiente texto="PENDIENTE min" />}</span>
+                    <span class="fila__precio">{s.precio != null ? `${s.precio} €` : <Pendiente texto="PENDIENTE €" />}</span>
+                    <span class="fila__ir">Reservar este servicio →</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p class="servicios__nota"><Pendiente /> Confirmar la lista de servicios, la duración y los precios.</p>
+          </div>
+          <Foto ratio="4 / 5" alt="" falta="Manos del barbero con la máquina, primer plano, fondo oscuro" />
+        </div>
+      </div>
+    </section>
+
+    <!-- EQUIPO -->
+    <section class="sec" id="equipo" aria-labelledby="t-equipo">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-equipo">El equipo</h2>
+          <p class="lead">Quién te va a cortar el pelo.</p>
+        </div>
+        <ul class="equipo">
+          {equipo.map((b, i) => (
+            <li class="barbero">
+              <Foto src={b.foto} ratio="4 / 5" alt={b.nombre ? `${b.nombre}, barbero de Llano Peluqueros` : ''} falta={`Retrato del barbero ${i + 1} en su puesto`} />
+              <div>
+                <h3 class="h3 barbero__nombre">{b.nombre ?? <>Barbero {i + 1} <Pendiente texto="PENDIENTE nombre" /></>}</h3>
+                <p class="muted">{b.especialidad ?? <Pendiente texto="PENDIENTE especialidad" />}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <!-- TRABAJOS -->
+    <section class="sec" id="trabajos" aria-labelledby="t-trabajos">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-trabajos">Trabajos recientes</h2>
+          {ig ? (
+            <a class="link" href={`https://www.instagram.com/${ig}/`} rel="noopener" target="_blank">Más en Instagram @{ig}</a>
+          ) : (
+            <p class="muted">Más en Instagram <Pendiente texto="PENDIENTE @usuario" /></p>
+          )}
+        </div>
+        <div class="trabajos">
+          <Foto ratio="4 / 5" alt="" falta="Degradado terminado, perfil, fondo liso" />
+          <Foto ratio="16 / 9" alt="" falta="Corte clásico con raya, de lado" />
+          <Foto ratio="16 / 9" alt="" falta="Barba perfilada, primer plano" />
+        </div>
+      </div>
+    </section>
+
+    <!-- OPINIONES -->
+    <section class="sec" id="opiniones" aria-labelledby="t-opiniones">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-opiniones">Opiniones</h2>
+        </div>
+        <div class="opiniones__vacio">
+          <p class="h3">Aquí irán las opiniones de vuestros clientes.</p>
+          <p class="muted"><Pendiente /> Añadir reseñas reales (por ejemplo, de Google) con el permiso del cliente. No se publican opiniones inventadas.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISITA -->
+    <section class="sec" id="visita" aria-labelledby="t-visita">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-visita">Visítanos</h2>
+        </div>
+        <a class="direccion" href={negocio.mapa} rel="noopener" target="_blank">
+          {negocio.calle},<br />{negocio.ciudad}
+          <span class="sr-only">(abre Google Maps)</span>
+        </a>
+        <div class="visita">
+          <div>
+            <p class="estado" data-estado style="margin-bottom:16px">
+              <span class="estado__dot" aria-hidden="true"></span>
+              <span data-estado-texto>Hoy de <strong>{horarioTexto}</strong></span>
+            </p>
+            <dl class="horario" aria-label="Horario">
+              {dias.map((d, i) => (
+                <div data-dia={diaIdx[i]}>
+                  <dt>{d}</dt>
+                  <dd>{negocio.diasAbierto == null ? horarioTexto : negocio.diasAbierto.includes(diaIdx[i]) ? horarioTexto : 'Cerrado'}</dd>
+                </div>
+              ))}
+            </dl>
+            {negocio.diasAbierto == null && (
+              <p class="small muted" style="margin-top:12px"><Pendiente /> Confirmar qué días abrís (y festivos).</p>
+            )}
+          </div>
+          <div>
+            <p class="lead" style="margin-bottom:8px">Ven directamente o pide cita para no esperar.</p>
+            <p class="muted">
+              Teléfono: {tel ? <a class="link" href={`tel:${tel}`}>{tel}</a> : <Pendiente />}
+            </p>
+            <div class="visita__acciones">
+              <a class="btn btn--ghost" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar <Fragment set:html={flecha} /></a>
+              {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESERVA -->
+    <section class="sec" id="reserva" aria-labelledby="t-reserva">
+      <div class="wrap">
+        <div class="sec__head">
+          <h2 class="h2" id="t-reserva">Reserva tu cita</h2>
+          <p class="lead">Tres pasos: servicio, barbero y hora.</p>
+        </div>
+        <div class="reserva" data-reserva={datosReserva}>
+          <ol class="pasos" aria-label="Pasos de la reserva">
+            <li data-paso-ind="1" data-estado="actual"><span>1</span><span>Servicio</span></li>
+            <li data-paso-ind="2"><span>2</span><span>Barbero</span></li>
+            <li data-paso-ind="3"><span>3</span><span>Día y hora</span></li>
+            <li data-paso-ind="4"><span>4</span><span>Confirmar</span></li>
+          </ol>
+
+          <div class="panel" aria-live="polite">
+            <div class="paso" data-paso="1">
+              <h3 class="h3 paso__titulo">¿Qué te hacemos?</h3>
+              <div class="opciones" role="group" aria-label="Servicio">
+                {servicios.map((s) => (
+                  <button class="opcion" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
+                    <span>{s.nombre}</span>
+                    <small>{s.precio != null ? `${s.precio} €` : '[PENDIENTE €]'}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div class="paso" data-paso="2" hidden>
+              <h3 class="h3 paso__titulo">¿Con quién?</h3>
+              <div class="opciones opciones--dos" role="group" aria-label="Barbero">
+                <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor="cualquiera">
+                  <span>Me da igual</span><small>El primero libre</small>
+                </button>
+                {equipo.map((b, i) => (
+                  <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor={b.id}>
+                    <span>{b.nombre ?? `Barbero ${i + 1}`}</span>
+                  </button>
+                ))}
+              </div>
+              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
+            </div>
+
+            <div class="paso" data-paso="3" hidden>
+              <h3 class="h3 paso__titulo">¿Cuándo?</h3>
+              <div class="dias" role="group" aria-label="Día" data-dias></div>
+              <div class="opciones opciones--dos" role="group" aria-label="Hora" data-horas></div>
+              <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
+            </div>
+
+            <div class="paso" data-paso="4" hidden>
+              <h3 class="h3 paso__titulo">Tu cita</h3>
+              <dl class="resumen" data-resumen></dl>
+              <p class="aviso">La reserva online está en camino: todavía no se envía. <span class="pend">[PENDIENTE] sistema de reservas</span></p>
+              <div class="paso__pie">
+                <button class="volver" type="button" data-volver>← Volver</button>
+                <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <div class="wrap">
+      <div class="pie__grid">
+        <div>
+          <p class="pie__titulo">Dirección</p>
+          <a class="link" href={negocio.mapa} rel="noopener" target="_blank" style="font-size:1.25rem">{negocio.calle}, {negocio.ciudad}</a>
+          <p class="muted" style="margin-top:8px">{horarioTexto}</p>
+        </div>
+        <div>
+          <p class="pie__titulo">Página</p>
+          <ul class="pie__lista">
+            <li><a href="#servicios">Servicios</a></li>
+            <li><a href="#equipo">Equipo</a></li>
+            <li><a href="#trabajos">Trabajos</a></li>
+            <li><a href="#reserva">Reservar</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="pie__titulo">Contacto</p>
+          <ul class="pie__lista">
+            <li>{tel ? <a href={`tel:${tel}`}>{tel}</a> : <Pendiente texto="PENDIENTE teléfono" />}</li>
+            <li>{ig ? <a href={`https://www.instagram.com/${ig}/`} rel="noopener" target="_blank">Instagram</a> : <Pendiente texto="PENDIENTE Instagram" />}</li>
+          </ul>
+        </div>
+      </div>
+      <p class="pie__nombre" aria-hidden="true">Llano Peluqueros</p>
+      <div class="pie__legal">
+        <span>© {new Date().getFullYear()} {negocio.nombre}</span>
+        <nav aria-label="Legal">
+          <a href="/aviso-legal/">Aviso legal</a>
+          <a href="/privacidad/">Privacidad</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="barra" aria-label="Acciones rápidas" data-barra>
+    <a class="btn btn--primary" href="#reserva">Reservar</a>
+    {wa ? (
+      <a class="btn btn--ghost" href={`https://wa.me/${wa.replace(/\D/g, '')}`} rel="noopener" target="_blank">WhatsApp</a>
+    ) : (
+      <a class="btn btn--ghost" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar</a>
+    )}
+    {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
+  </nav>
+</Base>
+
+<script>
+  import { iniciar } from '../scripts/app';
+  iniciar();
+</script>

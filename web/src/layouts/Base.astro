@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+import { negocio } from '../data/negocio';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = `${negocio.nombre} · Peluquería de caballero en ${negocio.ciudad}`,
+  description = `Peluquería de caballero en ${negocio.calle}, ${negocio.ciudad}. Horario de 9:00 a 13:00 y de 16:00 a 20:00. Pide tu cita online.`,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HairSalon',
+  name: negocio.nombre,
+  url: canonical.origin,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: negocio.calle,
+    addressLocality: negocio.ciudad,
+    addressRegion: 'Asturias',
+    addressCountry: 'ES',
+  },
+  ...(negocio.telefono ? { telephone: negocio.telefono } : {}),
+  ...(negocio.instagram ? { sameAs: [`https://www.instagram.com/${negocio.instagram}/`] } : {}),
+  // openingHoursSpecification: se añade cuando estén confirmados los días (negocio.diasAbierto).
+};
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0e0e0d" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:site_name" content={negocio.nombre} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <!-- [PENDIENTE] og:image cuando haya foto real del local (1200x630) -->
+    <meta name="twitter:card" content="summary" />
+
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+    <slot />
+  </body>
+</html>

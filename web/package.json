@@ -1,0 +1,14 @@
+{
+  "name": "llano-peluqueros",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "astro": "^5.18.2"
+  },
+  "type": "module",
+  "private": true
+}
