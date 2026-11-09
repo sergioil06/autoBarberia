@@ -28,7 +28,7 @@ const datosReserva = JSON.stringify({
     <div class="wrap nav__in">
       <a class="nav__logo" href="#inicio" aria-label="Llano Peluqueros, inicio">Llano</a>
       <nav class="nav__links" aria-label="Principal">
-        <a href="#servicios">Servicios</a>
+        <a href="#reserva">Precios</a>
         <a href="#trabajos">Trabajos</a>
         <a href="#visita">Visítanos</a>
         <a class="btn btn--primary" href="#reserva">Reservar cita</a>
@@ -49,7 +49,7 @@ const datosReserva = JSON.stringify({
       </button>
     </div>
     <ul class="menu__list">
-      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#reserva">Precios</a></li>
       <li><a href="#trabajos">Trabajos</a></li>
       <li><a href="#visita">Visítanos</a></li>
     </ul>
@@ -69,7 +69,6 @@ const datosReserva = JSON.stringify({
           <p class="lead" data-in style="--i:0">Corte y barba para hombre en la Calle Velázquez, Gijón.</p>
           <div class="hero__actions" data-in style="--i:1">
             <a class="btn btn--primary" href="#reserva" data-cta-hero>Reservar cita <Fragment set:html={flecha} /></a>
-            <a class="link hero__precios" href="#servicios">Ver precios</a>
           </div>
           <p class="estado" data-estado data-in style="--i:2">
             <span class="estado__dot" aria-hidden="true"></span>
@@ -83,8 +82,8 @@ const datosReserva = JSON.stringify({
     <section class="sec sec--rojo" id="reserva" aria-labelledby="t-reserva">
       <div class="wrap">
         <div class="sec__head">
-          <h2 class="h2" id="t-reserva">Reserva tu cita</h2>
-          <p class="lead">Elige servicio, barbero y hora.</p>
+          <h2 class="h2" id="t-reserva">Precios y cita</h2>
+          <p class="lead">Elige un servicio para empezar.</p>
         </div>
         <div class="reserva" data-reserva={datosReserva}>
           <ol class="pasos" aria-label="Pasos de la reserva">
@@ -96,15 +95,24 @@ const datosReserva = JSON.stringify({
 
           <div class="panel" aria-live="polite">
             <div class="paso" data-paso="1">
-              <h3 class="h3 paso__titulo">¿Qué te hacemos?</h3>
-              <div class="opciones" role="group" aria-label="Servicio">
+              <h3 class="sr-only paso__titulo">Servicios y precios</h3>
+              <ul class="filas" role="group" aria-label="Servicio">
                 {servicios.map((s) => (
-                  <button class="opcion" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
-                    <span>{s.nombre}</span>
-                    {s.precio != null ? <small class="etiqueta">{s.precio} €</small> : <Pendiente texto="PENDIENTE €" />}
-                  </button>
+                  <li>
+                    <button class="fila" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
+                      <span class="fila__nombre">{s.nombre}</span>
+                      <span class="fila__datos">
+                        {s.precio != null && s.minutos != null ? (
+                          <><span class="fila__dur">{s.minutos} min</span><span class="fila__precio">{s.precio} €</span></>
+                        ) : (
+                          <Pendiente texto="PENDIENTE precio y duración" />
+                        )}
+                      </span>
+                      <svg class="fila__flecha" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             <div class="paso" data-paso="2" hidden>
@@ -144,36 +152,7 @@ const datosReserva = JSON.stringify({
       </div>
     </section>
 
-    <!-- SERVICIOS -->
-    <section class="sec" id="servicios" aria-labelledby="t-servicios">
-      <div class="wrap">
-        <div class="sec__head">
-          <h2 class="h2" id="t-servicios">Servicios y precios</h2>
-          <p class="lead">Elige uno y te llevamos directo a la reserva.</p>
-        </div>
-        <div class="servicios">
-          <div>
-            <ul class="filas">
-              {servicios.map((s) => (
-                <li>
-                  <button class="fila" type="button" data-elegir-servicio={s.id}>
-                    <span class="fila__nombre">{s.nombre}</span>
-                    <span class="fila__dur">{s.minutos ? `${s.minutos} min` : <Pendiente texto="PENDIENTE min" />}</span>
-                    <span class="fila__precio">{s.precio != null ? `${s.precio} €` : <Pendiente texto="PENDIENTE €" />}</span>
-                    <span class="fila__ir">Reservar este servicio →</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p class="servicios__nota"><Pendiente /> Confirmar la lista de servicios, la duración y los precios.</p>
-          </div>
-          <Foto foto={fotos.servicios} ratio="4 / 5" sizes="(max-width: 860px) 100vw, 40vw" />
-        </div>
-      </div>
-    </section>
 
-
-    <FotoAncha class="corte" foto={fotos.corte} escritorio={21 / 9} movil={4 / 5} />
 
     <!-- TRABAJOS -->
     <section class="sec" id="trabajos" aria-labelledby="t-trabajos">
@@ -198,19 +177,15 @@ const datosReserva = JSON.stringify({
     <!-- VISITA -->
     <section class="sec" id="visita" aria-labelledby="t-visita">
       <div class="wrap">
-        <div class="sec__head">
-          <h2 class="h2" id="t-visita">Visítanos</h2>
-        </div>
-        <a class="direccion" href={negocio.mapa} rel="noopener" target="_blank">
-          {negocio.calle},<br />{negocio.ciudad}
-          <span class="sr-only">(abre Google Maps)</span>
-        </a>
+        <h2 class="direccion-h" id="t-visita">
+          <span class="sr-only">Visítanos: </span>
+          <a class="direccion" href={negocio.mapa} rel="noopener" target="_blank">
+            {negocio.calle},<br />{negocio.ciudad}
+            <span class="sr-only">(abre Google Maps)</span>
+          </a>
+        </h2>
         <div class="visita">
           <div>
-            <p class="estado" data-estado style="margin-bottom:16px">
-              <span class="estado__dot" aria-hidden="true"></span>
-              <span data-estado-texto>Horario <strong>{horarioTexto}</strong></span>
-            </p>
             {diasConfirmados ? (
             <dl class="horario" aria-label="Horario">
               {dias.map((d, i) => (
@@ -227,9 +202,7 @@ const datosReserva = JSON.stringify({
                 <div><dt>Días</dt><dd><Pendiente texto="PENDIENTE días" /></dd></div>
               </dl>
             )}
-          </div>
-          <div>
-            <p class="lead" style="margin-bottom:8px">Ven directamente o pide cita para no esperar.</p>
+            <p class="lead visita__texto">Ven directamente o pide cita para no esperar.</p>
             <p class="muted">
               Teléfono: {tel ? <a class="link" href={`tel:${tel}`}>{tel}</a> : <Pendiente />}
             </p>
@@ -239,6 +212,7 @@ const datosReserva = JSON.stringify({
               {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
             </div>
           </div>
+          <Foto ratio="4 / 3" falta="Fachada del local desde la acera de enfrente, de día" sizes="(max-width: 860px) 100vw, 45vw" />
         </div>
       </div>
     </section>
@@ -251,14 +225,13 @@ const datosReserva = JSON.stringify({
         <div>
           <p class="pie__titulo">Dirección</p>
           <a class="link" href={negocio.mapa} rel="noopener" target="_blank" style="font-size:1.25rem">{negocio.calle}, {negocio.ciudad}</a>
-          <p class="muted" style="margin-top:8px">{horarioTexto}</p>
         </div>
         <div>
           <p class="pie__titulo">Página</p>
           <ul class="pie__lista">
-            <li><a href="#servicios">Servicios</a></li>
+            <li><a href="#reserva">Precios</a></li>
             <li><a href="#trabajos">Trabajos</a></li>
-            <li><a href="#reserva">Reservar</a></li>
+            <li><a href="#visita">Visítanos</a></li>
           </ul>
         </div>
         <div>
@@ -269,7 +242,6 @@ const datosReserva = JSON.stringify({
           </ul>
         </div>
       </div>
-      <p class="pie__nombre" aria-hidden="true">Llano Peluqueros</p>
       <div class="pie__legal">
         <span>© {new Date().getFullYear()} {negocio.nombre}</span>
         <span>Fotos de {Object.values(fotos).map((f, i, all) => (

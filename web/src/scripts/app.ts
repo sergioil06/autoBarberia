@@ -131,7 +131,7 @@ function reserva() {
   pasos.forEach((p) => p.querySelector('h3')?.setAttribute('tabindex', '-1'));
 
   const marca = (grupo: Element, valor: string) =>
-    grupo.querySelectorAll<HTMLElement>('.opcion').forEach((b) =>
+    grupo.querySelectorAll<HTMLElement>('[data-opcion]').forEach((b) =>
       b.setAttribute('aria-pressed', String(b.dataset.valor === valor)));
 
   raiz.addEventListener('click', (e) => {
@@ -141,7 +141,7 @@ function reserva() {
     const tipo = t.dataset.opcion as 'servicio' | 'barbero' | 'dia' | 'hora';
     const valor = t.dataset.valor!;
     sel[tipo] = valor;
-    marca(t.parentElement!, valor);
+    marca(t.closest('[role="group"]') ?? t.parentElement!, valor);
     // Pequeña pausa para que se vea la elección antes de avanzar.
     if (tipo === 'servicio') setTimeout(() => ir(2), 160);
     if (tipo === 'barbero') setTimeout(() => ir(3), 160);
@@ -149,15 +149,6 @@ function reserva() {
     if (tipo === 'hora') setTimeout(() => ir(4), 160);
   });
 
-  // Desde la lista de servicios: elegir y saltar a la reserva.
-  document.querySelectorAll<HTMLElement>('[data-elegir-servicio]').forEach((b) =>
-    b.addEventListener('click', () => {
-      sel.servicio = b.dataset.elegirServicio!;
-      marca(pasos[0], sel.servicio);
-      ir(2, false);
-      document.querySelector('#reserva')?.scrollIntoView({ block: 'start' });
-      setTimeout(() => pasos[1].querySelector<HTMLElement>('h3')?.focus({ preventScroll: true }), 400);
-    }));
 
   const diasEl = raiz.querySelector<HTMLElement>('[data-dias]')!;
   const horasEl = raiz.querySelector<HTMLElement>('[data-horas]')!;

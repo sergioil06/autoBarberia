@@ -19,18 +19,6 @@ export const fotos = {
     autor: 'Antonio Reynoso',
     autorUrl: 'https://unsplash.com/@infantleon',
   },
-  corte: {
-    base: u('photo-1593702275687-f8b402bf1fb5'),
-    alt: 'Degradado con raya marcada a navaja, de perfil',
-    autor: 'Michael DeMoya',
-    autorUrl: 'https://unsplash.com/@demoya',
-  },
-  servicios: {
-    base: u('photo-1647140655214-e4a2d914971f'),
-    alt: 'Barbero cortando a tijera sobre peine a un cliente con barba',
-    autor: 'Nate Johnston',
-    autorUrl: 'https://unsplash.com/@natejohnston',
-  },
   trabajo1: {
     base: u('photo-1640301133543-41fe25ad6450'),
     alt: 'Degradado corto recién terminado, de perfil',
