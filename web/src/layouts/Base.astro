@@ -27,7 +27,17 @@ const jsonLd = {
   },
   ...(negocio.telefono ? { telephone: negocio.telefono } : {}),
   ...(negocio.instagram ? { sameAs: [`https://www.instagram.com/${negocio.instagram}/`] } : {}),
-  // openingHoursSpecification: se añade cuando estén confirmados los días (negocio.diasAbierto).
+  priceRange: '€',
+  ...(negocio.diasAbierto
+    ? {
+        openingHoursSpecification: negocio.franjas.map((f) => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: negocio.diasAbierto!.map((d) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d]),
+          opens: f.desde,
+          closes: f.hasta,
+        })),
+      }
+    : {}),
 };
 ---
 <!doctype html>
@@ -47,7 +57,7 @@ const jsonLd = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <!-- [PENDIENTE] og:image cuando haya foto real del local (1200x630) -->
+    <meta property="og:image" content={new URL('/img/fachada-1020.webp', Astro.site)} />
     <meta name="twitter:card" content="summary" />
 
     <script is:inline>document.documentElement.classList.add('js');</script>

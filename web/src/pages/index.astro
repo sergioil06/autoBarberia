@@ -3,16 +3,28 @@ import Base from '../layouts/Base.astro';
 import Foto from '../components/Foto.astro';
 import FotoAncha from '../components/FotoAncha.astro';
 import Pendiente from '../components/Pendiente.astro';
-import { negocio, servicios, equipo } from '../data/negocio';
+import { negocio, servicios, equipo, telefonoBonito } from '../data/negocio';
 import { fotos } from '../data/fotos';
 
 const horarioTexto = negocio.franjas.map((f) => `${f.desde.replace(/^0/, '')}–${f.hasta}`).join(' · ');
-const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-const diaIdx = [1, 2, 3, 4, 5, 6, 0];
 const tel = negocio.telefono;
 const wa = negocio.whatsapp;
 const ig = negocio.instagram;
 const diasConfirmados = negocio.diasAbierto != null;
+const telTexto = tel ? telefonoBonito(tel) : '';
+
+// Agrupa días seguidos con el mismo horario: «Lunes a sábado», «Domingo».
+const nombresDia = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const ordenSemana = [1, 2, 3, 4, 5, 6, 0];
+const grupos: { dias: number[]; abierto: boolean }[] = [];
+for (const d of ordenSemana) {
+  const abierto = negocio.diasAbierto?.includes(d) ?? false;
+  const ultimo = grupos[grupos.length - 1];
+  if (ultimo && ultimo.abierto === abierto) ultimo.dias.push(d);
+  else grupos.push({ dias: [d], abierto });
+}
+const nombreGrupo = (g: number[]) =>
+  g.length === 1 ? nombresDia[g[0]] : `${nombresDia[g[0]]} a ${nombresDia[g[g.length - 1]].toLowerCase()}`;
 
 const flecha = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
@@ -100,7 +112,10 @@ const datosReserva = JSON.stringify({
                 {servicios.map((s) => (
                   <li>
                     <button class="fila" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
-                      <span class="fila__nombre">{s.nombre}</span>
+                      <span class="fila__texto">
+                        <span class="fila__nombre">{s.nombre}</span>
+                        {s.descripcion && <span class="fila__desc">{s.descripcion}</span>}
+                      </span>
                       <span class="fila__datos">
                         {s.precio != null && s.minutos != null ? (
                           <><span class="fila__dur">{s.minutos} min</span><span class="fila__precio">{s.precio} €</span></>
@@ -140,8 +155,7 @@ const datosReserva = JSON.stringify({
             <div class="paso" data-paso="4" hidden>
               <h3 class="h3 paso__titulo">Tu cita</h3>
               <dl class="resumen" data-resumen></dl>
-              <p class="aviso">La reserva online está en camino: todavía no se envía. <span class="pend">[PENDIENTE] sistema de reservas</span></p>
-              <p class="muted alternativa">Mientras tanto, ven directamente: {negocio.calle}, {negocio.ciudad}. <a class="link" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar</a></p>
+              <p class="aviso">La reserva online estará disponible muy pronto. De momento, pide esta cita por teléfono{tel && <> al <a class="link" href={`tel:${tel}`}>{telTexto}</a></>} o ven directamente a {negocio.calle}.</p>
               <div class="paso__pie">
                 <button class="volver" type="button" data-volver>← Volver</button>
                 <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
@@ -188,10 +202,10 @@ const datosReserva = JSON.stringify({
           <div>
             {diasConfirmados ? (
             <dl class="horario" aria-label="Horario">
-              {dias.map((d, i) => (
-                <div data-dia={diaIdx[i]}>
-                  <dt>{d}</dt>
-                  <dd>{negocio.diasAbierto == null ? horarioTexto : negocio.diasAbierto.includes(diaIdx[i]) ? horarioTexto : 'Cerrado'}</dd>
+              {grupos.map((g) => (
+                <div data-dias={g.dias.join(',')}>
+                  <dt>{nombreGrupo(g.dias)}</dt>
+                  <dd>{g.abierto ? horarioTexto : 'Cerrado'}</dd>
                 </div>
               ))}
             </dl>
@@ -204,9 +218,8 @@ const datosReserva = JSON.stringify({
             )}
             <p class="lead visita__texto">Ven directamente o pide cita para no esperar.</p>
             <p class="muted">
-              Teléfono: {tel ? <a class="link" href={`tel:${tel}`}>{tel}</a> : <Pendiente />}
+              Teléfono: {tel ? <a class="link" href={`tel:${tel}`}>{telTexto}</a> : <Pendiente />}
             </p>
-            <p class="muted opiniones-nota">Opiniones de clientes: <Pendiente texto="PENDIENTE reseñas reales" /></p>
             <div class="visita__acciones">
               <a class="btn btn--ghost" href={negocio.mapa} rel="noopener" target="_blank">Cómo llegar <Fragment set:html={flecha} /></a>
               {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
@@ -247,8 +260,8 @@ const datosReserva = JSON.stringify({
         <div>
           <p class="pie__titulo">Contacto</p>
           <ul class="pie__lista">
-            <li>{tel ? <a href={`tel:${tel}`}>{tel}</a> : <Pendiente texto="PENDIENTE teléfono" />}</li>
-            <li>{ig ? <a href={`https://www.instagram.com/${ig}/`} rel="noopener" target="_blank">Instagram</a> : <Pendiente texto="PENDIENTE Instagram" />}</li>
+            <li>{tel ? <a href={`tel:${tel}`}>{telTexto}</a> : <Pendiente texto="PENDIENTE teléfono" />}</li>
+            <li>{ig ? <a href={`https://www.instagram.com/${ig}/`} rel="noopener" target="_blank">Instagram @{ig}</a> : <Pendiente texto="PENDIENTE Instagram" />}</li>
           </ul>
         </div>
       </div>

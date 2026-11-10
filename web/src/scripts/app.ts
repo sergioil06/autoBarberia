@@ -43,7 +43,9 @@ function estado(datos: Datos) {
     const t = el.querySelector('[data-estado-texto]');
     if (t) t.innerHTML = html;
   });
-  document.querySelector(`.horario [data-dia="${dia}"]`)?.setAttribute('data-hoy', '');
+  document.querySelectorAll<HTMLElement>('.horario [data-dias]').forEach((fila) => {
+    if (fila.dataset.dias!.split(',').map(Number).includes(dia)) fila.setAttribute('data-hoy', '');
+  });
 }
 
 /* ───────── Navegación y menú ───────── */
