@@ -3,20 +3,25 @@
 // visible con la foto que hay que hacer.
 import { src as srcDe, srcset as srcsetDe, type FotoStock } from '../data/fotos';
 
+type FotoLocal = { src: string; srcset?: string; alt: string; ancho: number; alto: number };
+
 interface Props {
   foto?: FotoStock | null;
+  local?: FotoLocal | null; // foto propia del negocio, en /public
   ratio?: string; // p. ej. '4 / 5'
   sizes?: string;
   falta?: string;
   class?: string;
   eager?: boolean;
 }
-const { foto, ratio = '4 / 5', sizes = '(max-width: 860px) 100vw, 45vw', falta = '', class: cls = '', eager = false } = Astro.props;
+const { foto, local, ratio = '4 / 5', sizes = '(max-width: 860px) 100vw, 45vw', falta = '', class: cls = '', eager = false } = Astro.props;
 const [a, b] = ratio.split('/').map((n) => Number(n.trim()));
 const r = a / b;
 ---
-<figure class:list={['foto', cls, { 'foto--falta': !foto }]} style={`--r: ${ratio}`}>
-  {foto ? (
+<figure class:list={['foto', cls, { 'foto--falta': !foto && !local }]} style={`--r: ${ratio}`}>
+  {local ? (
+    <img src={local.src} srcset={local.srcset} sizes={sizes} width={local.ancho} height={local.alto} alt={local.alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  ) : foto ? (
     <img
       src={srcDe(foto, r)}
       srcset={srcsetDe(foto, r)}

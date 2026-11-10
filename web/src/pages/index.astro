@@ -212,7 +212,17 @@ const datosReserva = JSON.stringify({
               {tel && <a class="btn btn--ghost" href={`tel:${tel}`}>Llamar</a>}
             </div>
           </div>
-          <Foto ratio="4 / 3" falta="Fachada del local desde la acera de enfrente, de día" sizes="(max-width: 860px) 100vw, 45vw" />
+          <Foto
+            ratio="4 / 3"
+            local={{
+              src: '/img/fachada-680.webp',
+              srcset: '/img/fachada-680.webp 680w, /img/fachada-1020.webp 1020w',
+              alt: 'Fachada de Llano Peluqueros Caballeros en la Calle Velázquez, Gijón',
+              ancho: 680,
+              alto: 510,
+            }}
+            sizes="(max-width: 860px) 100vw, 45vw"
+          />
         </div>
       </div>
     </section>
