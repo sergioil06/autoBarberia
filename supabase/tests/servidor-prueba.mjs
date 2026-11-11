@@ -28,6 +28,7 @@ await db.exec(`
 `);
 await db.exec(readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}migrations/20261112010000_telefono_es.sql`, 'utf8'));
+await db.exec(readFileSync(`${raiz}migrations/20261112020000_greenapi.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}seed.sql`, 'utf8'));
 
 // Usuario de prueba del panel: alex@llano.test / prueba123 → barbero Álex (admin).

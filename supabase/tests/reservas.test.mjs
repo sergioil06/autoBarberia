@@ -12,6 +12,7 @@ const migracion = readFileSync(`${raiz}migrations/20261111000000_reservas.sql`, 
 const semilla = readFileSync(`${raiz}seed.sql`, 'utf8');
 const whatsapp = readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8');
 const telefonoEs = readFileSync(`${raiz}migrations/20261112010000_telefono_es.sql`, 'utf8');
+const greenapi = readFileSync(`${raiz}migrations/20261112020000_greenapi.sql`, 'utf8');
 
 let db;
 const uno = async (sql, p = []) => (await db.query(sql, p)).rows[0];
@@ -60,6 +61,7 @@ before(async () => {
   `);
   await db.exec(whatsapp);
   await db.exec(telefonoEs);
+  await db.exec(greenapi);
   await db.exec(semilla);
 });
 
@@ -342,4 +344,32 @@ test('teléfonos de España: exactamente 9 cifras', async () => {
   assert.equal(await n('+34 671 38 12 9'), null, 'falta una cifra');
   assert.equal(await n('+34 671 38 12 945'), null, 'sobra una cifra');
   assert.equal(await n('+44 7911 123456'), '+447911123456', 'extranjero');
+});
+
+
+test('whatsapp por Green-API: texto libre con el enlace de la cita', async () => {
+  await db.exec(`insert into vault.decrypted_secrets values ('greenapi_token', 'TOKEN-GREEN')`);
+  await db.exec(`update ajustes set whatsapp_proveedor = 'greenapi', greenapi_url = 'https://7105.api.greenapi.com/',
+    greenapi_instancia = '7105000001', whatsapp_activo = true, plantilla_confirmacion = 'confirmacion_cita'`);
+  const r = (await uno(`select public.reservar('degradado', $1, 'Pablo García', '671 38 12 94', true) r`, [await madrid(diaLaborable(14), '11:00')])).r;
+  const env = (await uno('select url, body from net.peticiones order by id desc limit 1'));
+  assert.equal(env.url, 'https://7105.api.greenapi.com/waInstance7105000001/sendMessage/TOKEN-GREEN');
+  assert.equal(env.body.chatId, '34671381294@c.us');
+  assert.match(env.body.message, /^Hola Pablo/);
+  assert.match(env.body.message, /\*Llano Peluqueros\*/);
+  assert.match(env.body.message, /Degradado/);
+  assert.match(env.body.message, /a las 11:00/);
+  assert.ok(env.body.message.includes(`/cita/?t=${r.token}`));
+  assert.ok(env.body.message.includes(r.codigo));
+
+  // Recordatorio por Green-API
+  const alex = (await uno(`select id from barberos where nombre = 'Álex'`)).id;
+  const v = (await uno(`insert into citas (barbero_id, servicio_id, inicio, cliente_nombre, cliente_telefono)
+    values ($1, 'corte', now() + interval '22 hours', 'Recordar Green', '+34611000999') returning id`, [alex])).id;
+  await db.query(`update citas set creada_en = now() - interval '2 days' where id = $1`, [v]);
+  assert.equal((await uno('select public.enviar_recordatorios() n')).n, 1);
+  const rec = (await uno('select body from net.peticiones order by id desc limit 1')).body;
+  assert.equal(rec.chatId, '34611000999@c.us');
+  assert.match(rec.message, /te recordamos tu cita/);
+  await db.exec(`update ajustes set whatsapp_activo = false, whatsapp_proveedor = 'meta'`);
 });
