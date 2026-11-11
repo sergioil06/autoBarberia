@@ -168,7 +168,7 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 }
 .btn:active { transform: scale(0.97); }
 .btn--primary { background: var(--rojo); color: var(--on-rojo); }
-.btn--ghost { border-color: var(--line-strong); color: var(--ink); }
+.btn--ghost { border-color: var(--line-strong); color: var(--ink); background: transparent; }
 .btn[aria-disabled='true'],
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .btn svg { transition: transform 200ms var(--ease-out); }
@@ -744,3 +744,57 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 
 .fila__texto { display: grid; gap: 4px; }
 .fila__desc { color: var(--ink-2); font-size: 0.9375rem; line-height: 1.45; }
+
+/* ───────── Reserva: horas, formulario y confirmación ───────── */
+.opciones--horas { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+.opciones--horas .opcion { justify-content: center; min-height: 52px; font-weight: 600; }
+.opcion:disabled { opacity: 0.4; cursor: not-allowed; }
+.cargando { padding: 12px 0; }
+.error-reserva { color: #ff8f7f; font-weight: 500; }
+.error-reserva:empty { display: none; }
+.datos { display: grid; gap: 20px; }
+.campos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .campos { grid-template-columns: 1fr; } }
+.campo { display: grid; gap: 8px; font-size: 0.9375rem; color: var(--ink-2); }
+.campo input {
+  min-height: 52px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 1rem; /* 16px: sin zoom en iOS */
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctl);
+  transition: border-color 200ms ease;
+}
+.campo input:focus { border-color: var(--ink); outline: none; }
+.campo input::placeholder { color: var(--ink-3); }
+.casilla { display: flex; gap: 12px; align-items: flex-start; font-size: 0.9375rem; color: var(--ink-2); line-height: 1.5; }
+.casilla input { width: 22px; height: 22px; margin-top: 1px; accent-color: var(--rojo); flex: none; }
+.trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+[data-reserva]:not([data-demo]) .aviso--demo { display: none; }
+[data-reserva][data-demo] [data-enviar] { opacity: 0.45; pointer-events: none; }
+[data-enviar][data-cargando] { opacity: 0.7; cursor: progress; }
+.exito__texto { margin-bottom: 16px; max-width: 52ch; }
+.exito__codigo { color: var(--ink); letter-spacing: 0.08em; }
+
+/* ───────── Página «Tu cita» ───────── */
+.cita { padding-block: clamp(48px, 8vw, 96px); max-width: 760px; display: grid; gap: 24px; align-content: start; min-height: 70svh; }
+.cita h1 { margin-bottom: 8px; }
+.cita [data-vista] { display: grid; gap: 20px; }
+.cita [data-vista][hidden] { display: none; }
+.estado-cita {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.estado-cita[data-estado='confirmada'] { border-color: var(--open); color: var(--open); }
+.estado-cita[data-estado='cancelada'] { color: var(--ink-3); }
+.cita__acciones { display: flex; flex-wrap: wrap; gap: 12px; }
+.cita__acciones[hidden] { display: none; }
+.cita__cancelar { color: #ff8f7f; }
+.cita__confirmar, .cita__mover { display: grid; gap: 16px; padding: 24px; background: var(--surface); border-radius: var(--r-ctl); }
+.cita__confirmar[hidden], .cita__mover[hidden] { display: none; }

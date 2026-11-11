@@ -29,10 +29,14 @@ const nombreGrupo = (g: number[]) =>
 const flecha = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
 const datosReserva = JSON.stringify({
-  servicios: servicios.map((s) => ({ id: s.id, nombre: s.nombre, minutos: s.minutos, precio: s.precio })),
+  servicios: servicios.map((s) => ({ id: s.id, nombre: s.nombre, descripcion: s.descripcion ?? null, minutos: s.minutos, precio: s.precio })),
   equipo: equipo.map((b, i) => ({ id: b.id, nombre: b.nombre ?? `Barbero ${i + 1}` })),
   franjas: negocio.franjas,
   diasAbierto: negocio.diasAbierto,
+  // Con estas dos variables la reserva es real; sin ellas, funciona en modo demostración.
+  supabase: import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    ? { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PUBLIC_SUPABASE_ANON_KEY }
+    : null,
 });
 ---
 <Base>
@@ -91,7 +95,7 @@ const datosReserva = JSON.stringify({
     </section>
 
     <!-- RESERVA -->
-    <section class="sec sec--rojo" id="reserva" aria-labelledby="t-reserva">
+    <section class="sec" id="reserva" aria-labelledby="t-reserva">
       <div class="wrap">
         <div class="sec__head">
           <h2 class="h2" id="t-reserva">Precios y cita</h2>
@@ -108,7 +112,7 @@ const datosReserva = JSON.stringify({
           <div class="panel" aria-live="polite">
             <div class="paso" data-paso="1">
               <h3 class="sr-only paso__titulo">Servicios y precios</h3>
-              <ul class="filas" role="group" aria-label="Servicio">
+              <ul class="filas" role="group" aria-label="Servicio" data-lista-servicios>
                 {servicios.map((s) => (
                   <li>
                     <button class="fila" type="button" aria-pressed="false" data-opcion="servicio" data-valor={s.id}>
@@ -132,7 +136,7 @@ const datosReserva = JSON.stringify({
 
             <div class="paso" data-paso="2" hidden>
               <h3 class="h3 paso__titulo">¿Con quién?</h3>
-              <div class="opciones opciones--dos" role="group" aria-label="Barbero">
+              <div class="opciones opciones--dos" role="group" aria-label="Barbero" data-lista-barberos>
                 <button class="opcion" type="button" aria-pressed="false" data-opcion="barbero" data-valor="cualquiera">
                   <span>Me da igual</span><small>El primero libre</small>
                 </button>
@@ -148,17 +152,46 @@ const datosReserva = JSON.stringify({
             <div class="paso" data-paso="3" hidden>
               <h3 class="h3 paso__titulo">¿Cuándo?</h3>
               <div class="dias" role="group" aria-label="Día" data-dias></div>
-              <div class="opciones opciones--dos" role="group" aria-label="Hora" data-horas></div>
+              <div class="opciones opciones--horas" role="group" aria-label="Hora" data-horas></div>
               <div class="paso__pie"><button class="volver" type="button" data-volver>← Volver</button></div>
             </div>
 
             <div class="paso" data-paso="4" hidden>
               <h3 class="h3 paso__titulo">Tu cita</h3>
               <dl class="resumen" data-resumen></dl>
-              <p class="aviso">La reserva online estará disponible muy pronto. De momento, pide esta cita por teléfono{tel && <> al <a class="link" href={`tel:${tel}`}>{telTexto}</a></>} o ven directamente a {negocio.calle}.</p>
+              <form class="datos" data-form novalidate>
+                <div class="campos">
+                  <label class="campo" for="r-nombre">
+                    <span>Nombre</span>
+                    <input id="r-nombre" name="nombre" type="text" autocomplete="given-name" maxlength="60" required />
+                  </label>
+                  <label class="campo" for="r-tel">
+                    <span>Teléfono (te llegará la confirmación por WhatsApp)</span>
+                    <input id="r-tel" name="telefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="612 345 678" required />
+                  </label>
+                </div>
+                <label class="trampa" aria-hidden="true">Web <input name="web" type="text" tabindex="-1" autocomplete="off" /></label>
+                <label class="casilla" for="r-ok">
+                  <input id="r-ok" name="consentimiento" type="checkbox" required />
+                  <span>Acepto que {negocio.nombre} use mi nombre y teléfono para gestionar la cita y avisarme por WhatsApp. <a class="link" href="/privacidad/">Privacidad</a></span>
+                </label>
+                <p class="aviso aviso--demo">La reserva online estará disponible muy pronto. De momento, pide esta cita por teléfono{tel && <> al <a class="link" href={`tel:${tel}`}>{telTexto}</a></>} o ven directamente a {negocio.calle}.</p>
+                <p class="error-reserva" role="alert" data-error></p>
+                <div class="paso__pie">
+                  <button class="volver" type="button" data-volver>← Volver</button>
+                  <button class="btn btn--primary" type="submit" data-enviar>Confirmar reserva</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="paso" data-paso="5" hidden>
+              <h3 class="h3 paso__titulo">Cita reservada</h3>
+              <p class="lead exito__texto" data-exito-texto></p>
+              <p class="muted">Código de tu cita: <strong class="exito__codigo" data-exito-codigo></strong></p>
+              <p class="muted">Guarda este enlace para cambiar o cancelar la cita:</p>
               <div class="paso__pie">
-                <button class="volver" type="button" data-volver>← Volver</button>
-                <button class="btn btn--primary" type="button" disabled>Confirmar reserva</button>
+                <a class="btn btn--ghost" href="/cita/" data-exito-enlace>Ver, cambiar o cancelar</a>
+                <button class="volver" type="button" data-otra>Hacer otra reserva</button>
               </div>
             </div>
           </div>

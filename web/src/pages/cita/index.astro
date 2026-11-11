@@ -1,0 +1,66 @@
+---
+import Base from '../../layouts/Base.astro';
+import { negocio, telefonoBonito } from '../../data/negocio';
+
+const tel = negocio.telefono;
+const cfg = import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  ? { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PUBLIC_SUPABASE_ANON_KEY }
+  : null;
+---
+<Base title={`Tu cita · ${negocio.nombre}`} description="Consulta, cambia o cancela tu cita.">
+  <meta name="robots" content="noindex" slot="head" />
+  <header class="nav" data-scrolled>
+    <div class="wrap nav__in">
+      <a class="nav__logo" href="/">Llano</a>
+    </div>
+  </header>
+
+  <main id="contenido" class="wrap cita" data-cita={JSON.stringify(cfg)} data-tel={tel ?? ''} data-tel-texto={tel ? telefonoBonito(tel) : ''}>
+    <h1 class="h2">Tu cita</h1>
+
+    <div data-vista="cargando"><p class="muted">Cargando tu cita…</p></div>
+
+    <div data-vista="error" hidden>
+      <p class="lead" data-error-texto></p>
+      <p class="muted">Si necesitas ayuda, {tel ? <>llámanos al <a class="link" href={`tel:${tel}`}>{telefonoBonito(tel)}</a></> : 'ven a vernos'}.</p>
+      <p><a class="link" href="/#reserva">Pedir una cita nueva</a></p>
+    </div>
+
+    <div data-vista="detalle" hidden>
+      <p class="estado-cita" data-estado-cita></p>
+      <dl class="resumen" data-resumen></dl>
+
+      <div class="cita__acciones" data-acciones>
+        <button class="btn btn--ghost" type="button" data-accion="cambiar">Cambiar día u hora</button>
+        <button class="btn btn--ghost cita__cancelar" type="button" data-accion="cancelar">Cancelar cita</button>
+      </div>
+      <p class="muted small" data-plazo></p>
+
+      <div class="cita__confirmar" data-panel="cancelar" hidden>
+        <p class="lead">¿Seguro que quieres cancelar la cita?</p>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-accion="volver">No, mantenerla</button>
+          <button class="btn btn--primary" type="button" data-accion="confirmar-cancelar">Sí, cancelar</button>
+        </div>
+      </div>
+
+      <div class="cita__mover" data-panel="cambiar" hidden>
+        <h2 class="h3">Elige otro día y hora</h2>
+        <div class="dias" role="group" aria-label="Día" data-dias></div>
+        <div class="opciones opciones--horas" role="group" aria-label="Hora" data-horas></div>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-accion="volver">← Volver</button>
+          <button class="btn btn--primary" type="button" data-accion="confirmar-mover" disabled>Guardar el cambio</button>
+        </div>
+      </div>
+
+      <p class="error-reserva" role="alert" data-error></p>
+      <p><a class="link" href="/">Volver a la web</a></p>
+    </div>
+  </main>
+</Base>
+
+<script>
+  import { cita } from '../../scripts/cita';
+  cita();
+</script>
