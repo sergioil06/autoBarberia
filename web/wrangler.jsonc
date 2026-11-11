@@ -1,0 +1,12 @@
+// Cloudflare Workers (proyecto «autobarberia»): web estática, sin servidor.
+// La construye `npm run build` en dist/ y `npx wrangler deploy` la publica.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "autobarberia",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  }
+}
