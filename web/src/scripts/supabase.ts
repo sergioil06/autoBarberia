@@ -31,7 +31,8 @@ export async function rpc<T>(cfg: NonNullable<Config>, fn: string, args: Record<
       method: 'POST',
       headers: {
         apikey: cfg.key,
-        Authorization: `Bearer ${cfg.key}`,
+        // Las claves antiguas (anon) son JWT y van también aquí; las nuevas (sb_publishable_…) solo en apikey.
+        ...(cfg.key.startsWith('eyJ') ? { Authorization: `Bearer ${cfg.key}` } : {}),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(args),

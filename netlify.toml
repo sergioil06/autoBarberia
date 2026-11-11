@@ -1,0 +1,22 @@
+# Netlify: construye la web de la carpeta web/ y publica web/dist.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Supabase: la URL y la clave pública (anon/publishable) van en el navegador a propósito;
+  # con ellas solo se pueden usar las funciones de reserva. NUNCA poner aquí la service_role.
+  PUBLIC_SUPABASE_URL = "https://lizwslcbmuxpwxgayxau.supabase.co"
+  # PUBLIC_SUPABASE_ANON_KEY = "pendiente"
+
+# El panel y las páginas de cita no deben aparecer en Google.
+[[headers]]
+  for = "/panel/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/cita/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
