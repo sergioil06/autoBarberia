@@ -9,7 +9,7 @@
   # Supabase: la URL y la clave pública (anon/publishable) van en el navegador a propósito;
   # con ellas solo se pueden usar las funciones de reserva. NUNCA poner aquí la service_role.
   PUBLIC_SUPABASE_URL = "https://lizwslcbmuxpwxgayxau.supabase.co"
-  # PUBLIC_SUPABASE_ANON_KEY = "pendiente"
+  PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_QW-He0yssDJqSndl0i3Blw_R9Obj7jN"
 
 # El panel y las páginas de cita no deben aparecer en Google.
 [[headers]]
