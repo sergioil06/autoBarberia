@@ -320,3 +320,12 @@ test('whatsapp: recordatorio solo si se pidió con más de 24 h', async () => {
   assert.equal((await uno('select public.enviar_recordatorios() n')).n, 0, 'no se repite');
   await db.exec(`update ajustes set whatsapp_activo = false`);
 });
+
+
+test('whatsapp: plantilla de prueba hello_world sin parámetros', async () => {
+  await db.exec(`update ajustes set whatsapp_activo = true, plantilla_confirmacion = 'hello_world'`);
+  await uno(`select public.reservar('barba', $1, 'Prueba Hola', '699111222', true)`, [await madrid(diaLaborable(13), '10:00')]);
+  const b = (await uno('select body from net.peticiones order by id desc limit 1')).body;
+  assert.deepEqual(b.template, { name: 'hello_world', language: { code: 'en_US' } });
+  await db.exec(`update ajustes set whatsapp_activo = false, plantilla_confirmacion = 'confirmacion_cita'`);
+});

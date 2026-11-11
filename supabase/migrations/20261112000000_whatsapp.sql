@@ -73,6 +73,15 @@ begin
     return null;
   end if;
 
+  -- «hello_world» es la plantilla de prueba de Meta: va sin parámetros y en inglés.
+  if p_plantilla = 'hello_world' then
+    cuerpo := jsonb_build_object(
+      'messaging_product', 'whatsapp',
+      'to', regexp_replace(p_telefono, '\D', '', 'g'),
+      'type', 'template',
+      'template', jsonb_build_object('name', 'hello_world', 'language', jsonb_build_object('code', 'en_US'))
+    );
+  else
   cuerpo := jsonb_build_object(
     'messaging_product', 'whatsapp',
     'to', regexp_replace(p_telefono, '\D', '', 'g'),
@@ -89,6 +98,7 @@ begin
       )
     )
   );
+  end if;
 
   select net.http_post(
     url := format('https://graph.facebook.com/%s/%s/messages', a.whatsapp_version_api, a.whatsapp_phone_number_id),
