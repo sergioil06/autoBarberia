@@ -24,3 +24,23 @@ export const numeroDia = (dia: string) => String(Number(dia.slice(8, 10)));
 
 export const escapar = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+/** '2026-11-12T10:00:00' (hora de Gijón) → ISO UTC. */
+export function aIsoGijon(local: string) {
+  const guess = new Date(`${local}Z`);
+  const off = (d: Date) => {
+    const p = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Madrid', timeZoneName: 'shortOffset' })
+      .formatToParts(d).find((x) => x.type === 'timeZoneName')!.value; // «GMT+1»
+    const m = p.match(/GMT([+-]\d+)?/);
+    return Number(m?.[1] ?? 0) * 60;
+  };
+  return new Date(guess.getTime() - off(guess) * 60e3).toISOString();
+}
+
+/** ISO → 'YYYY-MM-DD' y 'HH:MM' en Gijón (para rellenar formularios). */
+export function partesGijon(iso: string) {
+  const p = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(new Date(iso));
+  const g = (t: string) => p.find((x) => x.type === t)!.value;
+  return { dia: `${g('year')}-${g('month')}-${g('day')}`, hora: `${g('hour')}:${g('minute')}` };
+}

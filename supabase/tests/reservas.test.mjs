@@ -203,3 +203,55 @@ test('panel: el personal ve citas; un usuario sin barbero no', async () => {
     await db.exec(`reset test.uid`);
   }
 });
+
+test('panel: funciones solo para el personal', async () => {
+  const intruso = '22222222-2222-2222-2222-222222222222';
+  await db.query('insert into auth.users (id) values ($1)', [intruso]);
+  await db.exec(`set test.uid = '${intruso}'`);
+  await db.exec('set role authenticated');
+  try {
+    await falla(`select public.panel_yo()`, [], 'NO_AUTORIZADO');
+  } finally {
+    await db.exec('reset role');
+    await db.exec('reset test.uid');
+  }
+});
+
+test('panel: crear, mover, estados y bloqueos', async () => {
+  const uid = '11111111-1111-1111-1111-111111111111'; // Álex (asociado en la prueba anterior)
+  await db.exec(`set test.uid = '${uid}'`);
+  await db.exec('set role authenticated');
+  try {
+    const yo = (await uno('select public.panel_yo() r')).r;
+    assert.equal(yo.yo.nombre, 'Álex');
+    assert.equal(yo.barberos.length, 2);
+    const alex = yo.yo.id;
+    const dia = diaLaborable(10);
+
+    // Cita a mano sin teléfono, incluso fuera de horario (13:30).
+    const c = (await uno(`select public.panel_crear_cita($1, 'corte', $2, 'Cliente sin móvil') r`, [alex, await madrid(dia, '13:30')])).r;
+    assert.ok(c.codigo);
+    await falla(`select public.panel_crear_cita($1, 'corte', $2, 'Otro')`, [alex, await madrid(dia, '13:45')], 'HUECO_OCUPADO');
+    await falla(`select public.panel_crear_cita($1, 'corte', $2, 'Otro', '12')`, [alex, await madrid(dia, '15:00')], 'TELEFONO_NO_VALIDO');
+
+    const ag = (await uno('select public.panel_agenda($1, $1) r', [dia])).r;
+    assert.equal(ag.citas.length, 1);
+    assert.equal(ag.citas[0].cliente, 'Cliente sin móvil');
+
+    await uno('select public.panel_mover_cita($1, $2)', [c.id, await madrid(dia, '10:00')]);
+    await uno(`select public.panel_estado_cita($1, 'no_vino')`, [c.id]);
+    const ag2 = (await uno('select public.panel_agenda($1, $1) r', [dia])).r;
+    assert.equal(ag2.citas[0].estado, 'no_vino');
+
+    const b = (await uno(`select public.panel_bloquear($1, $2, $3, 'Médico') r`, [await madrid(dia, '16:00'), await madrid(dia, '18:00'), alex])).r;
+    const ag3 = (await uno('select public.panel_agenda($1, $1) r', [dia])).r;
+    assert.equal(ag3.bloqueos.length, 1);
+    await uno('select public.panel_quitar_bloqueo($1)', [b]);
+  } finally {
+    await db.exec('reset role');
+    await db.exec('reset test.uid');
+  }
+  // El bloqueo de Álex quitaba huecos; ya quitado, vuelven.
+  const libres = await filas(`select 1 from public.huecos_libres('corte', $1, (select id from barberos where nombre='Álex')) h where to_char(h.inicio at time zone 'Europe/Madrid','HH24:MI') = '16:30'`, [diaLaborable(10)]);
+  assert.equal(libres.length, 1);
+});

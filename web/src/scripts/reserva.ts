@@ -2,7 +2,7 @@
 // Con Supabase configurado usa huecos reales y guarda la cita.
 // Sin configurar, funciona como demostración (horas según el horario, sin guardar).
 import { rpc, mensajeDe, ErrorReserva, type Config } from './supabase';
-import { diaGijon, etiquetaDia, numeroDia, hora, fechaLarga, escapar } from './fechas';
+import { diaGijon, etiquetaDia, numeroDia, hora, fechaLarga, escapar, aIsoGijon } from './fechas';
 
 type Servicio = { id: string; nombre: string; descripcion?: string | null; minutos: number | null; precio: number | null };
 type Barbero = { id: string; nombre: string };
@@ -266,16 +266,4 @@ export function reserva() {
 
   cargaCatalogo();
   ir(1, false);
-}
-
-/** '2026-11-12T10:00:00' (hora de Gijón) → ISO UTC. */
-function aIsoGijon(local: string) {
-  const guess = new Date(`${local}Z`);
-  const off = (d: Date) => {
-    const p = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Madrid', timeZoneName: 'shortOffset' })
-      .formatToParts(d).find((x) => x.type === 'timeZoneName')!.value; // «GMT+1»
-    const m = p.match(/GMT([+-]\d+)?/);
-    return Number(m?.[1] ?? 0) * 60;
-  };
-  return new Date(guess.getTime() - off(guess) * 60e3).toISOString();
 }

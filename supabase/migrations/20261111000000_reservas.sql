@@ -86,7 +86,7 @@ create table public.citas (
   inicio                   timestamptz not null,
   fin                      timestamptz not null,
   cliente_nombre           text not null check (char_length(cliente_nombre) between 2 and 60),
-  cliente_telefono         text not null check (cliente_telefono ~ '^\+[0-9]{9,15}$'),
+  cliente_telefono         text check (cliente_telefono ~ '^\+[0-9]{9,15}$'), -- puede faltar en citas creadas en el panel
   estado                   text not null default 'confirmada'
                            check (estado in ('confirmada', 'cancelada', 'completada', 'no_vino')),
   origen                   text not null default 'web' check (origen in ('web', 'panel')),
@@ -353,6 +353,130 @@ language sql stable security definer set search_path = public, pg_temp as $$
 $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- Panel de barberos (solo personal con cuenta)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+create or replace function public._exige_personal() returns void
+language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  if not exists (select 1 from barberos where user_id = auth.uid() and activo) then
+    raise exception 'NO_AUTORIZADO' using errcode = '42501';
+  end if;
+end $$;
+
+-- Quién soy y el catálogo completo para los formularios del panel.
+create or replace function public.panel_yo() returns jsonb
+language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  perform _exige_personal();
+  return jsonb_build_object(
+    'yo', (select jsonb_build_object('id', id, 'nombre', nombre, 'es_admin', es_admin) from barberos where user_id = auth.uid()),
+    'barberos', (select jsonb_agg(jsonb_build_object('id', id, 'nombre', nombre) order by orden) from barberos where activo),
+    'servicios', (select jsonb_agg(jsonb_build_object('id', id, 'nombre', nombre, 'minutos', minutos, 'precio', precio_cents / 100.0) order by orden) from servicios where activo),
+    'zona', (select zona from ajustes where id = 1)
+  );
+end $$;
+
+-- Citas y bloqueos entre dos días (incluidos), en hora de la barbería.
+create or replace function public.panel_agenda(p_desde date, p_hasta date) returns jsonb
+language plpgsql stable security definer set search_path = public, pg_temp as $$
+declare z text; a timestamptz; b timestamptz;
+begin
+  perform _exige_personal();
+  select zona into z from ajustes where id = 1;
+  a := p_desde::timestamp at time zone z;
+  b := (p_hasta + 1)::timestamp at time zone z;
+  return jsonb_build_object(
+    'citas', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', c.id, 'codigo', c.codigo, 'inicio', c.inicio, 'fin', c.fin,
+        'barbero_id', c.barbero_id, 'servicio_id', c.servicio_id, 'servicio', s.nombre,
+        'cliente', c.cliente_nombre, 'telefono', c.cliente_telefono,
+        'estado', c.estado, 'origen', c.origen, 'notas', c.notas) order by c.inicio)
+      from citas c join servicios s on s.id = c.servicio_id
+      where c.inicio >= a and c.inicio < b), '[]'::jsonb),
+    'bloqueos', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', k.id, 'barbero_id', k.barbero_id, 'inicio', k.inicio, 'fin', k.fin, 'motivo', k.motivo) order by k.inicio)
+      from bloqueos k where k.inicio < b and k.fin > a), '[]'::jsonb)
+  );
+end $$;
+
+-- Cita creada a mano (teléfono, en persona). Sin límites de horario ni antelación;
+-- solo la regla de no solapar.
+create or replace function public.panel_crear_cita(
+  p_barbero uuid, p_servicio text, p_inicio timestamptz,
+  p_nombre text, p_telefono text default null, p_notas text default null
+) returns jsonb
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
+declare tel text; nueva citas;
+begin
+  perform _exige_personal();
+  if nullif(btrim(coalesce(p_telefono, '')), '') is not null then
+    tel := normaliza_telefono(p_telefono);
+    if tel is null then raise exception 'TELEFONO_NO_VALIDO' using errcode = 'P0001'; end if;
+  end if;
+  if char_length(btrim(coalesce(p_nombre, ''))) < 2 then raise exception 'NOMBRE_NO_VALIDO' using errcode = 'P0001'; end if;
+  begin
+    insert into citas (barbero_id, servicio_id, inicio, cliente_nombre, cliente_telefono, origen, notas)
+    values (p_barbero, p_servicio, p_inicio, btrim(p_nombre), tel, 'panel', nullif(btrim(coalesce(p_notas, '')), ''))
+    returning * into nueva;
+  exception when exclusion_violation then
+    raise exception 'HUECO_OCUPADO' using errcode = 'P0001';
+  end;
+  return jsonb_build_object('id', nueva.id, 'codigo', nueva.codigo, 'token', nueva.token);
+end $$;
+
+create or replace function public.panel_mover_cita(p_id uuid, p_inicio timestamptz, p_barbero uuid default null)
+returns void
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
+begin
+  perform _exige_personal();
+  begin
+    update citas set inicio = p_inicio, barbero_id = coalesce(p_barbero, barbero_id),
+                     recordatorio_enviado_en = null
+     where id = p_id and estado = 'confirmada';
+    if not found then raise exception 'CITA_NO_ACTIVA' using errcode = 'P0001'; end if;
+  exception when exclusion_violation then
+    raise exception 'HUECO_OCUPADO' using errcode = 'P0001';
+  end;
+end $$;
+
+create or replace function public.panel_estado_cita(p_id uuid, p_estado text) returns void
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
+begin
+  perform _exige_personal();
+  if p_estado not in ('confirmada', 'cancelada', 'completada', 'no_vino') then
+    raise exception 'ESTADO_NO_VALIDO' using errcode = 'P0001';
+  end if;
+  begin
+    update citas set estado = p_estado where id = p_id;
+  exception when exclusion_violation then
+    -- Reactivar una cancelada cuyo hueco ya está ocupado.
+    raise exception 'HUECO_OCUPADO' using errcode = 'P0001';
+  end;
+end $$;
+
+create or replace function public.panel_bloquear(
+  p_inicio timestamptz, p_fin timestamptz, p_barbero uuid default null, p_motivo text default null
+) returns bigint
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
+declare nuevo bigint;
+begin
+  perform _exige_personal();
+  if p_fin <= p_inicio then raise exception 'FECHAS_NO_VALIDAS' using errcode = 'P0001'; end if;
+  insert into bloqueos (barbero_id, inicio, fin, motivo)
+  values (p_barbero, p_inicio, p_fin, nullif(btrim(coalesce(p_motivo, '')), ''))
+  returning id into nuevo;
+  return nuevo;
+end $$;
+
+create or replace function public.panel_quitar_bloqueo(p_id bigint) returns void
+language plpgsql volatile security definer set search_path = public, pg_temp as $$
+begin
+  perform _exige_personal();
+  delete from bloqueos where id = p_id;
+end $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- Seguridad
 -- ═══════════════════════════════════════════════════════════════════════════
 
@@ -387,6 +511,15 @@ grant execute on function
   public.mover_cita(text, timestamptz, uuid),
   public.huecos_para_mover(text, date, uuid)
 to anon, authenticated;
+grant execute on function
+  public.panel_yo(),
+  public.panel_agenda(date, date),
+  public.panel_crear_cita(uuid, text, timestamptz, text, text, text),
+  public.panel_mover_cita(uuid, timestamptz, uuid),
+  public.panel_estado_cita(uuid, text),
+  public.panel_bloquear(timestamptz, timestamptz, uuid, text),
+  public.panel_quitar_bloqueo(bigint)
+to authenticated;
 grant execute on function public.es_personal(), public.es_admin(), public.normaliza_telefono(text),
   public.nuevo_token(), public.nuevo_codigo()
 to authenticated;

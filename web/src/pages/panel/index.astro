@@ -1,0 +1,121 @@
+---
+import Base from '../../layouts/Base.astro';
+import { negocio } from '../../data/negocio';
+
+const cfg = import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  ? { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PUBLIC_SUPABASE_ANON_KEY }
+  : null;
+---
+<Base title={`Agenda · ${negocio.nombre}`} description="Panel privado de la barbería.">
+  <Fragment slot="head">
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="manifest" href="/panel/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Agenda Llano" />
+    <link rel="apple-touch-icon" href="/panel/icono-180.png" />
+  </Fragment>
+
+  <div class="panel-app" data-panel-app={JSON.stringify(cfg)}>
+    <!-- Acceso -->
+    <main id="contenido" class="wrap acceso" data-vista="acceso" hidden>
+      <h1 class="h2">Agenda</h1>
+      <p class="muted">Entra con la cuenta que te ha dado el dueño.</p>
+      <form class="datos" data-login novalidate>
+        <label class="campo" for="p-email"><span>Email</span>
+          <input id="p-email" name="email" type="email" autocomplete="username" required />
+        </label>
+        <label class="campo" for="p-pass"><span>Contraseña</span>
+          <input id="p-pass" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p class="error-reserva" role="alert" data-login-error></p>
+        <button class="btn btn--primary" type="submit">Entrar</button>
+      </form>
+    </main>
+
+    <main class="wrap" data-vista="sin-config" hidden>
+      <h1 class="h2">Agenda</h1>
+      <p class="lead">El panel se activará cuando la base de datos de reservas esté conectada.</p>
+    </main>
+
+    <!-- Agenda -->
+    <div data-vista="agenda" hidden>
+      <header class="pa-cab">
+        <div class="wrap pa-cab__in">
+          <a class="nav__logo" href="/">Llano</a>
+          <span class="muted small" data-yo></span>
+          <button class="volver" type="button" data-accion="salir">Salir</button>
+        </div>
+      </header>
+
+      <main class="wrap pa">
+        <div class="pa-dia">
+          <button class="pa-flecha" type="button" data-accion="dia-menos" aria-label="Día anterior">‹</button>
+          <div class="pa-dia__txt">
+            <h1 class="h3" data-titulo-dia></h1>
+            <button class="volver small" type="button" data-accion="hoy" data-ir-hoy>Volver a hoy</button>
+          </div>
+          <button class="pa-flecha" type="button" data-accion="dia-mas" aria-label="Día siguiente">›</button>
+        </div>
+
+        <div class="pa-semana" role="group" aria-label="Semana" data-semana></div>
+
+        <div class="pa-filtros" role="group" aria-label="Barbero" data-filtros></div>
+
+        <div class="pa-botones">
+          <button class="btn btn--primary" type="button" data-accion="nueva">+ Nueva cita</button>
+          <button class="btn btn--ghost" type="button" data-accion="bloquear">Bloquear horas</button>
+        </div>
+
+        <p class="error-reserva" role="alert" data-error></p>
+        <ol class="pa-lista" data-lista aria-live="polite"></ol>
+      </main>
+    </div>
+
+    <!-- Formularios -->
+    <dialog class="pa-dialogo" data-dialogo="cita">
+      <form class="datos" method="dialog" data-form-cita>
+        <h2 class="h3" data-dialogo-titulo>Nueva cita</h2>
+        <div class="campos">
+          <label class="campo" for="c-barbero"><span>Barbero</span><select id="c-barbero" name="barbero" required></select></label>
+          <label class="campo" for="c-servicio"><span>Servicio</span><select id="c-servicio" name="servicio" required></select></label>
+          <label class="campo" for="c-dia"><span>Día</span><input id="c-dia" name="dia" type="date" required /></label>
+          <label class="campo" for="c-hora"><span>Hora</span><input id="c-hora" name="hora" type="time" step="300" required /></label>
+        </div>
+        <div class="campos" data-solo-nueva>
+          <label class="campo" for="c-nombre"><span>Nombre del cliente</span><input id="c-nombre" name="nombre" type="text" maxlength="60" /></label>
+          <label class="campo" for="c-tel"><span>Teléfono (opcional)</span><input id="c-tel" name="telefono" type="tel" inputmode="tel" /></label>
+        </div>
+        <label class="campo" for="c-notas" data-solo-nueva><span>Notas (opcional)</span><input id="c-notas" name="notas" type="text" maxlength="200" /></label>
+        <p class="error-reserva" role="alert" data-dialogo-error></p>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-cerrar>Cancelar</button>
+          <button class="btn btn--primary" type="submit" value="ok">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="pa-dialogo" data-dialogo="bloqueo">
+      <form class="datos" method="dialog" data-form-bloqueo>
+        <h2 class="h3">Bloquear horas</h2>
+        <label class="campo" for="b-barbero"><span>Para</span><select id="b-barbero" name="barbero"></select></label>
+        <div class="campos">
+          <label class="campo" for="b-desde-dia"><span>Desde (día)</span><input id="b-desde-dia" name="desde_dia" type="date" required /></label>
+          <label class="campo" for="b-desde-hora"><span>Hora</span><input id="b-desde-hora" name="desde_hora" type="time" value="09:00" required /></label>
+          <label class="campo" for="b-hasta-dia"><span>Hasta (día)</span><input id="b-hasta-dia" name="hasta_dia" type="date" required /></label>
+          <label class="campo" for="b-hasta-hora"><span>Hora</span><input id="b-hasta-hora" name="hasta_hora" type="time" value="20:00" required /></label>
+        </div>
+        <label class="campo" for="b-motivo"><span>Motivo (opcional)</span><input id="b-motivo" name="motivo" type="text" maxlength="80" placeholder="Vacaciones, médico, festivo…" /></label>
+        <p class="error-reserva" role="alert" data-bloqueo-error></p>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-cerrar>Cancelar</button>
+          <button class="btn btn--primary" type="submit" value="ok">Bloquear</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+</Base>
+
+<script>
+  import { panel } from '../../scripts/panel';
+  panel();
+</script>
