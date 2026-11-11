@@ -11,6 +11,7 @@ const raiz = fileURLToPath(new URL('../', import.meta.url));
 const migracion = readFileSync(`${raiz}migrations/20261111000000_reservas.sql`, 'utf8');
 const semilla = readFileSync(`${raiz}seed.sql`, 'utf8');
 const whatsapp = readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8');
+const telefonoEs = readFileSync(`${raiz}migrations/20261112010000_telefono_es.sql`, 'utf8');
 
 let db;
 const uno = async (sql, p = []) => (await db.query(sql, p)).rows[0];
@@ -58,6 +59,7 @@ before(async () => {
     create table vault.decrypted_secrets (name text, decrypted_secret text);
   `);
   await db.exec(whatsapp);
+  await db.exec(telefonoEs);
   await db.exec(semilla);
 });
 
@@ -328,4 +330,16 @@ test('whatsapp: plantilla de prueba hello_world sin parámetros', async () => {
   const b = (await uno('select body from net.peticiones order by id desc limit 1')).body;
   assert.deepEqual(b.template, { name: 'hello_world', language: { code: 'en_US' } });
   await db.exec(`update ajustes set whatsapp_activo = false, plantilla_confirmacion = 'confirmacion_cita'`);
+});
+
+
+test('teléfonos de España: exactamente 9 cifras', async () => {
+  const n = async (t) => (await uno('select public.normaliza_telefono($1) t', [t])).t;
+  assert.equal(await n('671 38 12 94'), '+34671381294');
+  assert.equal(await n('+34 671 38 12 94'), '+34671381294');
+  assert.equal(await n('0034671381294'), '+34671381294');
+  assert.equal(await n('34671381294'), '+34671381294');
+  assert.equal(await n('+34 671 38 12 9'), null, 'falta una cifra');
+  assert.equal(await n('+34 671 38 12 945'), null, 'sobra una cifra');
+  assert.equal(await n('+44 7911 123456'), '+447911123456', 'extranjero');
 });
