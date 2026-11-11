@@ -1,0 +1,7 @@
+# Cloudflare Pages / Netlify: el panel y las páginas de cita fuera de Google.
+/panel/*
+  X-Robots-Tag: noindex, nofollow
+/cita/*
+  X-Robots-Tag: noindex, nofollow
+/panel/manifest.webmanifest
+  Content-Type: application/manifest+json
