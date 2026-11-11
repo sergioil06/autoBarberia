@@ -18,6 +18,15 @@ await db.exec(`
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
 `);
 await db.exec(readFileSync(`${raiz}migrations/20261111000000_reservas.sql`, 'utf8'));
+await db.exec(`
+  create schema net;
+  create table net.peticiones (id bigserial primary key, url text, headers jsonb, body jsonb);
+  create function net.http_post(url text, headers jsonb, body jsonb) returns bigint language sql
+    as $$ insert into net.peticiones (url, headers, body) values (url, headers, body) returning id $$;
+  create schema vault;
+  create table vault.decrypted_secrets (name text, decrypted_secret text);
+`);
+await db.exec(readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}seed.sql`, 'utf8'));
 
 // Usuario de prueba del panel: alex@llano.test / prueba123 → barbero Álex (admin).

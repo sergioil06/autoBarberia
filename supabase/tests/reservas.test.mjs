@@ -10,6 +10,7 @@ import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 const raiz = fileURLToPath(new URL('../', import.meta.url));
 const migracion = readFileSync(`${raiz}migrations/20261111000000_reservas.sql`, 'utf8');
 const semilla = readFileSync(`${raiz}seed.sql`, 'utf8');
+const whatsapp = readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8');
 
 let db;
 const uno = async (sql, p = []) => (await db.query(sql, p)).rows[0];
@@ -47,6 +48,16 @@ before(async () => {
       as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   `);
   await db.exec(migracion);
+  // Simulación de pg_net y Vault (en Supabase son reales).
+  await db.exec(`
+    create schema net;
+    create table net.peticiones (id bigserial primary key, url text, headers jsonb, body jsonb);
+    create function net.http_post(url text, headers jsonb, body jsonb) returns bigint language sql
+      as $$ insert into net.peticiones (url, headers, body) values (url, headers, body) returning id $$;
+    create schema vault;
+    create table vault.decrypted_secrets (name text, decrypted_secret text);
+  `);
+  await db.exec(whatsapp);
   await db.exec(semilla);
 });
 
@@ -254,4 +265,58 @@ test('panel: crear, mover, estados y bloqueos', async () => {
   // El bloqueo de Álex quitaba huecos; ya quitado, vuelven.
   const libres = await filas(`select 1 from public.huecos_libres('corte', $1, (select id from barberos where nombre='Álex')) h where to_char(h.inicio at time zone 'Europe/Madrid','HH24:MI') = '16:30'`, [diaLaborable(10)]);
   assert.equal(libres.length, 1);
+});
+
+
+test('whatsapp: sin activar no se envía nada', async () => {
+  const antes = (await uno('select count(*)::int n from net.peticiones')).n;
+  await uno(`select public.reservar('corte', $1, 'Silencio', '611222333', true)`, [await madrid(diaLaborable(11), '12:00')]);
+  assert.equal((await uno('select count(*)::int n from net.peticiones')).n, antes);
+});
+
+test('whatsapp: confirmación al reservar y al mover', async () => {
+  await db.exec(`insert into vault.decrypted_secrets values ('whatsapp_token', 'TOKEN-DE-PRUEBA')`);
+  await db.exec(`update ajustes set whatsapp_activo = true, whatsapp_phone_number_id = '123456'`);
+  const dia = diaLaborable(12);
+  const r = (await uno(`select public.reservar('corte-barba', $1, 'Javier Martín', '612 345 678', true) r`, [await madrid(dia, '17:30')])).r;
+  const env = await filas('select * from net.peticiones order by id desc limit 1');
+  const b = env[0].body;
+  assert.equal(env[0].url, 'https://graph.facebook.com/v21.0/123456/messages');
+  assert.equal(env[0].headers.Authorization, 'Bearer TOKEN-DE-PRUEBA');
+  assert.equal(b.to, '34612345678');
+  assert.equal(b.template.name, 'confirmacion_cita');
+  const p = b.template.components[0].parameters.map((x) => x.text);
+  assert.equal(p[0], 'Javier');
+  assert.equal(p[1], 'Corte + barba');
+  assert.match(p[2], /^(lunes|martes|miércoles|jueves|viernes|sábado) \d+ de [a-z]+$/);
+  assert.equal(p[3], '17:30');
+  assert.equal(p[5], r.codigo);
+  assert.equal(b.template.components[1].parameters[0].text, r.token);
+  assert.ok((await uno('select confirmacion_enviada_en from citas where token = $1', [r.token])).confirmacion_enviada_en);
+
+  const n = (await uno('select count(*)::int n from net.peticiones')).n;
+  await uno('select public.mover_cita($1, $2)', [r.token, await madrid(dia, '18:00')]);
+  assert.equal((await uno('select count(*)::int n from net.peticiones')).n, n + 1, 'nueva confirmación al mover');
+  const ult = (await uno('select body from net.peticiones order by id desc limit 1')).body;
+  assert.equal(ult.template.components[0].parameters[3].text, '18:00');
+  // Cancelar no envía confirmación.
+  await uno('select public.cancelar_cita($1)', [r.token]);
+  assert.equal((await uno('select count(*)::int n from net.peticiones')).n, n + 1);
+});
+
+test('whatsapp: recordatorio solo si se pidió con más de 24 h', async () => {
+  const alex = (await uno(`select id from barberos where nombre = 'Álex'`)).id;
+  // Cita dentro de 20 h, creada hace 3 días (directa en la tabla para simular el pasado).
+  const vieja = (await uno(`insert into citas (barbero_id, servicio_id, inicio, cliente_nombre, cliente_telefono)
+    values ($1, 'barba', now() + interval '20 hours', 'Antigua Reserva', '+34655000111') returning id`, [alex])).id;
+  await db.query(`update citas set creada_en = now() - interval '3 days' where id = $1`, [vieja]);
+  // Cita dentro de 21 h, pedida ahora mismo: no lleva recordatorio.
+  await db.query(`insert into citas (barbero_id, servicio_id, inicio, cliente_nombre, cliente_telefono)
+    values ($1, 'barba', now() + interval '21 hours', 'Reserva Reciente', '+34655000222')`, [alex]);
+  assert.equal((await uno('select public.enviar_recordatorios() n')).n, 1);
+  const ult = (await uno('select body from net.peticiones order by id desc limit 1')).body;
+  assert.equal(ult.template.name, 'recordatorio_cita');
+  assert.equal(ult.to, '34655000111');
+  assert.equal((await uno('select public.enviar_recordatorios() n')).n, 0, 'no se repite');
+  await db.exec(`update ajustes set whatsapp_activo = false`);
 });
