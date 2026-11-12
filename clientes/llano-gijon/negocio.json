@@ -1,0 +1,48 @@
+{
+  "slug": "llano-gijon",
+  "nombre": "Llano Peluqueros",
+  "ciudad": "Gijón",
+  "direccion": "Calle Velázquez 48, Gijón",
+  "telefono": "+34985000000",
+  "instagram": "llanopeluqueros",
+  "horario": [
+    {
+      "dias": "lunes a sábado",
+      "franjas": [
+        "09:00-13:00",
+        "16:00-20:00"
+      ]
+    },
+    {
+      "dias": "domingo",
+      "franjas": []
+    }
+  ],
+  "_nota": "Teléfono e Instagram PROVISIONALES. Confirmar antes de anunciar la web.",
+  "web": {
+    "produccion": "https://autobarberia.sergioil2906.workers.dev",
+    "proyecto_cloudflare": "autobarberia",
+    "dominio_propio": null
+  },
+  "supabase": {
+    "proyecto": "lizwslcbmuxpwxgayxau",
+    "migraciones_aplicadas": [
+      "20261111000000_reservas",
+      "20261112000000_whatsapp",
+      "20261112010000_telefono_es",
+      "20261112020000_greenapi"
+    ]
+  },
+  "automatizaciones": {
+    "reservas": true,
+    "panel_barberos": true,
+    "confirmacion_whatsapp": false,
+    "recordatorio_whatsapp": false,
+    "confirmacion_correo": false,
+    "recordatorio_correo": false,
+    "resenas_google": false,
+    "recuperacion_clientes": false,
+    "lista_espera": false
+  },
+  "plan": "Básico (pendiente de definir)"
+}
