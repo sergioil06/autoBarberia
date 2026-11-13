@@ -2,6 +2,7 @@
 // Usa el inicio de sesión de Supabase; los permisos los comprueba la base de datos.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { diaGijon, hora, escapar, aIsoGijon, partesGijon } from './fechas';
+import { gestion } from './gestion';
 
 type Cfg = { url: string; key: string } | null;
 type Barbero = { id: string; nombre: string };
@@ -67,10 +68,9 @@ export function panel() {
       $('[data-login-error]').textContent = textoError(error);
       return vista('acceso');
     }
-    barberos = yo.barberos ?? [];
-    servicios = yo.servicios ?? [];
+    aplicaCatalogo(yo);
     $('[data-yo]').textContent = yo.yo?.nombre ?? '';
-    rellenaSelects();
+    $('[data-solo-admin]').hidden = !yo.yo?.es_admin;
     vista('agenda');
     await carga();
   }
@@ -84,6 +84,19 @@ export function panel() {
     if (error) { err.textContent = 'Email o contraseña incorrectos.'; return; }
     arranca();
   });
+
+  function aplicaCatalogo(yo: { barberos?: Barbero[]; servicios?: Servicio[] }) {
+    barberos = yo.barberos ?? [];
+    servicios = yo.servicios ?? [];
+    if (filtro !== 'todos' && !barberos.some((b) => b.id === filtro)) filtro = 'todos';
+    rellenaSelects();
+  }
+  // Tras cambiar servicios o peluqueros en Gestión, la agenda usa los datos nuevos.
+  async function recargaCatalogo() {
+    const { data } = await sb.rpc('panel_yo');
+    if (data) aplicaCatalogo(data);
+  }
+  const ge = gestion(sb, raiz, recargaCatalogo);
 
   /* ── Datos ── */
   async function carga() {
@@ -184,6 +197,8 @@ export function panel() {
     if (t.closest('[data-cerrar]')) return (t.closest('dialog') as HTMLDialogElement).close();
 
     if (accion === 'salir') { await sb.auth.signOut(); return vista('acceso'); }
+    if (accion === 'gestion') { vista('gestion'); window.scrollTo(0, 0); return ge.abrir(); }
+    if (accion === 'agenda') { vista('agenda'); window.scrollTo(0, 0); return carga(); }
     if (accion === 'dia-menos') { dia = sumaDias(dia, -1); return carga(); }
     if (accion === 'dia-mas') { dia = sumaDias(dia, 1); return carga(); }
     if (accion === 'hoy') { dia = diaGijon(0); return carga(); }

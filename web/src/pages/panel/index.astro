@@ -43,7 +43,10 @@ const cfg = import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABA
         <div class="wrap pa-cab__in">
           <a class="nav__logo" href="/">Llano</a>
           <span class="muted small" data-yo></span>
-          <button class="volver" type="button" data-accion="salir">Salir</button>
+          <span class="pa-cab__acc">
+            <button class="volver" type="button" data-accion="gestion" data-solo-admin hidden>Gestión</button>
+            <button class="volver" type="button" data-accion="salir">Salir</button>
+          </span>
         </div>
       </header>
 
@@ -68,6 +71,79 @@ const cfg = import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABA
 
         <p class="error-reserva" role="alert" data-error></p>
         <ol class="pa-lista" data-lista aria-live="polite"></ol>
+      </main>
+    </div>
+
+
+    <!-- Gestión (solo admin) -->
+    <div data-vista="gestion" hidden>
+      <header class="pa-cab">
+        <div class="wrap pa-cab__in">
+          <a class="nav__logo" href="/">Llano</a>
+          <span class="muted small">Gestión</span>
+          <button class="volver" type="button" data-accion="agenda">‹ Agenda</button>
+        </div>
+      </header>
+
+      <main class="wrap pa" data-gestion>
+        <h1 class="h2">Gestión</h1>
+        <div class="pa-filtros" role="group" aria-label="Sección">
+          <button class="pa-chip" type="button" data-pestana-ir="servicios" aria-pressed="true">Servicios</button>
+          <button class="pa-chip" type="button" data-pestana-ir="barberos" aria-pressed="false">Peluqueros</button>
+          <button class="pa-chip" type="button" data-pestana-ir="horarios" aria-pressed="false">Horarios</button>
+          <button class="pa-chip" type="button" data-pestana-ir="ajustes" aria-pressed="false">Reservas</button>
+        </div>
+        <p class="error-reserva" role="alert" data-ge-error></p>
+        <p class="ge-aviso" role="status" data-ge-aviso></p>
+
+        <section class="ge-sec" data-pestana="servicios">
+          <p class="muted small">Lo que cambies aquí sale al momento en la web de reservas. Las citas ya reservadas conservan su duración.</p>
+          <div class="pa-botones"><button class="btn btn--primary" type="button" data-ge="nuevo-servicio">+ Nuevo servicio</button></div>
+          <ol class="pa-lista" data-ge-servicios></ol>
+        </section>
+
+        <section class="ge-sec" data-pestana="barberos" hidden>
+          <p class="muted small">Un peluquero nuevo empieza con el mismo horario que el primero del equipo; cámbialo en «Horarios».</p>
+          <div class="pa-botones"><button class="btn btn--primary" type="button" data-ge="nuevo-barbero">+ Nuevo peluquero</button></div>
+          <ol class="pa-lista" data-ge-barberos></ol>
+        </section>
+
+        <section class="ge-sec" data-pestana="horarios" hidden>
+          <label class="campo" for="h-barbero"><span>Peluquero</span><select id="h-barbero" data-ge-h-barbero></select></label>
+          <form class="datos" data-ge-horario novalidate>
+            <ol class="ge-semana" data-ge-dias></ol>
+            <div class="pa-botones">
+              <button class="btn btn--ghost" type="button" data-ge="copiar-lunes">Copiar el lunes a martes–sábado</button>
+              <button class="btn btn--primary" type="submit">Guardar horario</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="ge-sec" data-pestana="ajustes" hidden>
+          <form class="datos" data-ge-ajustes novalidate>
+            <div class="campos">
+              <label class="campo" for="a-paso"><span>Las citas empiezan cada</span>
+                <select id="a-paso" name="paso_min">
+                  <option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option>
+                  <option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option>
+                </select>
+              </label>
+              <label class="campo" for="a-antelacion"><span>Antelación mínima para reservar (horas)</span>
+                <input id="a-antelacion" name="antelacion_h" type="number" min="0" max="168" step="0.5" inputmode="decimal" required />
+              </label>
+              <label class="campo" for="a-dias"><span>Se puede reservar hasta (días vista)</span>
+                <input id="a-dias" name="dias_max" type="number" min="1" max="365" step="1" inputmode="numeric" required />
+              </label>
+              <label class="campo" for="a-limite"><span>Cambiar o cancelar hasta (horas antes)</span>
+                <input id="a-limite" name="limite_cambio_h" type="number" min="0" max="168" step="0.5" inputmode="decimal" required />
+              </label>
+              <label class="campo" for="a-max"><span>Citas pendientes por teléfono (máximo)</span>
+                <input id="a-max" name="max_citas_por_telefono" type="number" min="1" max="20" step="1" inputmode="numeric" required />
+              </label>
+            </div>
+            <div class="pa-botones"><button class="btn btn--primary" type="submit">Guardar ajustes</button></div>
+          </form>
+        </section>
       </main>
     </div>
 
@@ -109,6 +185,40 @@ const cfg = import.meta.env.PUBLIC_SUPABASE_URL && import.meta.env.PUBLIC_SUPABA
         <div class="paso__pie">
           <button class="volver" type="button" data-cerrar>Cancelar</button>
           <button class="btn btn--primary" type="submit" value="ok">Bloquear</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="pa-dialogo" data-dialogo="servicio">
+      <form class="datos" method="dialog" data-form-servicio novalidate>
+        <h2 class="h3" data-servicio-titulo>Nuevo servicio</h2>
+        <label class="campo" for="s-nombre"><span>Nombre</span><input id="s-nombre" name="nombre" type="text" maxlength="60" required /></label>
+        <label class="campo" for="s-desc"><span>Descripción (opcional)</span><input id="s-desc" name="descripcion" type="text" maxlength="140" /></label>
+        <div class="campos">
+          <label class="campo" for="s-min"><span>Duración (minutos)</span><input id="s-min" name="minutos" type="number" min="5" max="480" step="5" inputmode="numeric" required /></label>
+          <label class="campo" for="s-precio"><span>Precio (€)</span><input id="s-precio" name="precio" type="number" min="0" max="10000" step="0.01" inputmode="decimal" placeholder="Sin precio" /></label>
+        </div>
+        <label class="casilla" for="s-activo"><input id="s-activo" name="activo" type="checkbox" checked /> <span>Visible en la web de reservas</span></label>
+        <p class="error-reserva" role="alert" data-servicio-error></p>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-cerrar>Cancelar</button>
+          <button class="btn btn--primary" type="submit" value="ok">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="pa-dialogo" data-dialogo="barbero">
+      <form class="datos" method="dialog" data-form-barbero novalidate>
+        <h2 class="h3" data-barbero-titulo>Nuevo peluquero</h2>
+        <label class="campo" for="pb-nombre"><span>Nombre</span><input id="pb-nombre" name="nombre" type="text" maxlength="40" required /></label>
+        <label class="campo" for="pb-email"><span>Email para entrar en la agenda (opcional)</span><input id="pb-email" name="email" type="email" autocomplete="off" /></label>
+        <p class="muted small">Para que pueda entrar, crea su usuario en Supabase (Authentication → Add user) con este mismo email: se enlaza solo.</p>
+        <label class="casilla" for="pb-activo"><input id="pb-activo" name="activo" type="checkbox" checked /> <span>En activo (sale en la web y en la agenda)</span></label>
+        <label class="casilla" for="pb-admin"><input id="pb-admin" name="es_admin" type="checkbox" /> <span>Puede entrar en Gestión (admin)</span></label>
+        <p class="error-reserva" role="alert" data-barbero-error></p>
+        <div class="paso__pie">
+          <button class="volver" type="button" data-cerrar>Cancelar</button>
+          <button class="btn btn--primary" type="submit" value="ok">Guardar</button>
         </div>
       </form>
     </dialog>

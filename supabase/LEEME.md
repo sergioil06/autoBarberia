@@ -30,8 +30,19 @@ PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 Vuelve a desplegar. La clave *anon* es pública a propósito: con ella solo se pueden usar las funciones de reserva, no leer las tablas. **La clave `service_role` no debe ir nunca en la web.**
 
+## Gestión desde el panel (dueño)
+Aplica también `migrations/20261113000000_gestion.sql` (SQL Editor → Run). Después, un barbero con `es_admin = true` ve el botón **Gestión** en la agenda (web y app del móvil) y puede:
+- **Servicios**: crear, cambiar nombre, descripción, duración y precio, ordenar, ocultar o eliminar.
+- **Peluqueros**: dar de alta, cambiar nombre y email de acceso, hacer admin, ordenar, dar de baja o eliminar. Un peluquero nuevo empieza con el horario del primero del equipo.
+- **Horarios**: las franjas de cada día para cada peluquero.
+- **Reservas**: los ajustes de la tabla de abajo.
+
+Lo que ya tiene citas no se borra (se perdería el historial): se oculta o se da de baja. Un peluquero con citas pendientes no se puede dar de baja hasta moverlas o cancelarlas.
+
+**Acceso de un peluquero nuevo:** ponle un email en Gestión y crea su usuario en **Authentication → Users → Add user** con ese mismo email. Se enlaza solo, sin SQL.
+
 ## Ajustes
-Cambia en la tabla `ajustes` (Table Editor):
+Se cambian en Gestión → Reservas (o en la tabla `ajustes`):
 | Campo | Qué es | Por defecto |
 |---|---|---|
 | `paso_min` | cada cuántos minutos empieza un hueco | 15 |

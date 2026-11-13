@@ -13,7 +13,7 @@ const puerto = Number(process.argv[2] ?? 54321);
 const db = await PGlite.create({ extensions: { btree_gist }, parsers: { 1082: (v) => v } });
 await db.exec(`
   create role anon nologin; create role authenticated nologin;
-  create schema auth; create table auth.users (id uuid primary key);
+  create schema auth; create table auth.users (id uuid primary key, email text);
   create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
 `);
@@ -29,12 +29,13 @@ await db.exec(`
 await db.exec(readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}migrations/20261112010000_telefono_es.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}migrations/20261112020000_greenapi.sql`, 'utf8'));
+await db.exec(readFileSync(`${raiz}migrations/20261113000000_gestion.sql`, 'utf8'));
 await db.exec(readFileSync(`${raiz}seed.sql`, 'utf8'));
 
 // Usuario de prueba del panel: alex@llano.test / prueba123 → barbero Álex (admin).
 const UID = '11111111-1111-1111-1111-111111111111';
-await db.query('insert into auth.users (id) values ($1)', [UID]);
-await db.query(`update barberos set user_id = $1 where nombre = 'Álex'`, [UID]);
+await db.query('insert into auth.users (id, email) values ($1, $2)', [UID, 'alex@llano.test']);
+await db.query(`update barberos set user_id = $1, email = $2 where nombre = 'Álex'`, [UID, 'alex@llano.test']);
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const usuario = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'alex@llano.test', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
 const sesion = () => {
@@ -50,7 +51,9 @@ const uidDe = (req) => {
 };
 
 const PERMITIDAS = new Set(['catalogo', 'huecos_libres', 'dias_con_huecos', 'reservar', 'ver_cita', 'cancelar_cita', 'mover_cita', 'huecos_para_mover',
-  'panel_yo', 'panel_agenda', 'panel_crear_cita', 'panel_mover_cita', 'panel_estado_cita', 'panel_bloquear', 'panel_quitar_bloqueo']);
+  'panel_yo', 'panel_agenda', 'panel_crear_cita', 'panel_mover_cita', 'panel_estado_cita', 'panel_bloquear', 'panel_quitar_bloqueo',
+  'admin_datos', 'admin_guardar_servicio', 'admin_borrar_servicio', 'admin_guardar_barbero', 'admin_borrar_barbero',
+  'admin_ordenar', 'admin_guardar_horario', 'admin_guardar_ajustes']);
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'apikey, authorization, content-type, x-client-info, x-supabase-api-version, accept-profile, content-profile, prefer',

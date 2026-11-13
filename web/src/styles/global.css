@@ -868,3 +868,33 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22e
 .campo input[type='date'], .campo input[type='time'] { color-scheme: dark; }
 [data-solo-nueva][hidden] { display: none; }
 [data-vista][hidden] { display: none !important; }
+
+/* ───────── Panel: gestión (admin) ───────── */
+.pa-cab__acc { display: flex; gap: 16px; }
+.ge-sec { display: grid; gap: 16px; }
+.ge-sec[hidden] { display: none; }
+.ge-aviso { color: var(--open); font-size: 0.9375rem; }
+.ge-aviso:empty, [data-gestion] .error-reserva:empty { display: none; }
+.ge-fila { grid-template-columns: auto 1fr; align-items: start; }
+.ge-orden { display: grid; gap: 4px; }
+.ge-orden .pa-mini { width: 36px; padding: 0; }
+.ge-orden .pa-mini:disabled { opacity: 0.3; cursor: default; }
+.ge-fila[data-inactivo] .pa-cita__nombre { color: var(--ink-3); }
+.ge-semana { display: grid; gap: 10px; }
+.ge-dia {
+  display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: start;
+  padding: 14px 16px; background: var(--surface); border-radius: var(--r-ctl);
+}
+.ge-dia__nombre { font-weight: 650; padding-top: 8px; }
+.ge-dia__franjas { display: grid; gap: 8px; justify-items: start; }
+.ge-franja { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ge-franja input {
+  min-height: 44px; padding: 0 10px; font: inherit; font-size: 1rem; color: var(--ink); color-scheme: dark;
+  background: var(--bg); border: 1px solid var(--line-strong); border-radius: var(--r-ctl);
+}
+.ge-cerrado { color: var(--ink-3); padding-top: 8px; }
+.campo select { width: 100%; }
+@media (max-width: 480px) {
+  .ge-dia { grid-template-columns: 1fr; gap: 6px; }
+  .ge-dia__nombre { padding-top: 0; }
+}

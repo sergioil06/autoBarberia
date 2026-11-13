@@ -13,6 +13,7 @@ const semilla = readFileSync(`${raiz}seed.sql`, 'utf8');
 const whatsapp = readFileSync(`${raiz}migrations/20261112000000_whatsapp.sql`, 'utf8');
 const telefonoEs = readFileSync(`${raiz}migrations/20261112010000_telefono_es.sql`, 'utf8');
 const greenapi = readFileSync(`${raiz}migrations/20261112020000_greenapi.sql`, 'utf8');
+const gestion = readFileSync(`${raiz}migrations/20261113000000_gestion.sql`, 'utf8');
 
 let db;
 const uno = async (sql, p = []) => (await db.query(sql, p)).rows[0];
@@ -45,7 +46,7 @@ before(async () => {
   await db.exec(`
     create role anon nologin; create role authenticated nologin;
     create schema auth;
-    create table auth.users (id uuid primary key);
+    create table auth.users (id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable
       as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
   `);
@@ -62,6 +63,7 @@ before(async () => {
   await db.exec(whatsapp);
   await db.exec(telefonoEs);
   await db.exec(greenapi);
+  await db.exec(gestion);
   await db.exec(semilla);
 });
 
@@ -372,4 +374,125 @@ test('whatsapp por Green-API: texto libre con el enlace de la cita', async () =>
   assert.equal(rec.chatId, '34611000999@c.us');
   assert.match(rec.message, /te recordamos tu cita/);
   await db.exec(`update ajustes set whatsapp_activo = false, whatsapp_proveedor = 'meta'`);
+});
+
+// ─── Gestión (admin) ────────────────────────────────────────────────────────
+async function como(uid, fn) {
+  await db.exec(`set test.uid = '${uid}'`);
+  await db.exec('set role authenticated');
+  try { return await fn(); } finally { await db.exec('reset role'); await db.exec('reset test.uid'); }
+}
+async function cuenta(nombreBarbero, email) {
+  const uid = (await uno('select gen_random_uuid() u')).u;
+  await db.query('insert into auth.users (id, email) values ($1, $2)', [uid, email]);
+  if (nombreBarbero) await db.query('update barberos set user_id = $1, email = $2 where nombre = $3', [uid, email, nombreBarbero]);
+  return uid;
+}
+
+test('gestión: solo el admin', async () => {
+  const dani = await cuenta('Dani', 'dani@llano.test');
+  await como(dani, async () => {
+    await falla('select public.admin_datos()', [], 'NO_AUTORIZADO');
+    await falla(`select public.admin_guardar_servicio(null, 'Tinte', null, 60, 30)`, [], 'NO_AUTORIZADO');
+  });
+  await db.exec('set role anon');
+  try { await falla('select public.admin_datos()', [], 'permission denied'); } finally { await db.exec('reset role'); }
+});
+
+test('gestión: servicios (crear, precio, duración, ocultar, borrar)', async () => {
+  const alex = await cuenta('Álex', 'alex@llano.test');
+  await como(alex, async () => {
+    const id = (await uno(`select public.admin_guardar_servicio(null, 'Corte niño', 'Hasta 12 años', 25, 10.5) id`)).id;
+    assert.equal(id, 'corte-nino');
+    let c = (await uno('select public.catalogo() c')).c;
+    assert.deepEqual(c.servicios.at(-1), { id, nombre: 'Corte niño', descripcion: 'Hasta 12 años', minutos: 25, precio: 10.5 });
+
+    // Cambiar precio y duración: los huecos usan la duración nueva.
+    await db.query(`select public.admin_guardar_servicio('corte', 'Corte', 'Tijera y máquina.', 45, 15)`);
+    c = (await uno('select public.catalogo() c')).c;
+    const corte = c.servicios.find((s) => s.id === 'corte');
+    assert.equal(corte.minutos, 45);
+    assert.equal(corte.precio, 15);
+    const h = (await filas(`select to_char(inicio at time zone 'Europe/Madrid','HH24:MI') t from public.huecos_libres('corte', $1)`, [diaLaborable(20)])).map((r) => r.t);
+    assert.ok(h.includes('12:15') && !h.includes('12:30'), 'con 45 min el último hueco de la mañana es 12:15');
+    await db.query(`select public.admin_guardar_servicio('corte', 'Corte', 'Tijera y máquina, con lavado y peinado.', 30, 14)`);
+
+    await falla(`select public.admin_guardar_servicio(null, 'X', null, 30, 10)`, [], 'NOMBRE_NO_VALIDO');
+    await falla(`select public.admin_guardar_servicio(null, 'Largo', null, 2, 10)`, [], 'DURACION_NO_VALIDA');
+    await falla(`select public.admin_guardar_servicio(null, 'Caro', null, 30, -1)`, [], 'PRECIO_NO_VALIDO');
+
+    // Sin citas se borra; con citas solo se oculta.
+    assert.equal((await uno(`select public.admin_borrar_servicio($1) r`, [id])).r, 'borrado');
+    assert.equal((await uno(`select public.admin_borrar_servicio('barba') r`)).r, 'oculto');
+    c = (await uno('select public.catalogo() c')).c;
+    assert.ok(!c.servicios.some((s) => s.id === 'barba'));
+    await db.query(`select public.admin_guardar_servicio('barba', 'Arreglo de barba', null, 20, 9, true)`);
+    assert.ok((await uno('select public.catalogo() c')).c.servicios.some((s) => s.id === 'barba'));
+
+    // Orden
+    await db.query(`select public.admin_ordenar('servicios', array['barba','corte','degradado','corte-barba'])`);
+    assert.equal((await uno('select public.catalogo() c')).c.servicios[0].id, 'barba');
+    await db.query(`select public.admin_ordenar('servicios', array['corte','degradado','barba','corte-barba'])`);
+  });
+});
+
+test('gestión: barberos (alta con horario, cuenta por email, baja y borrar)', async () => {
+  const alex = (await uno(`select user_id from barberos where nombre = 'Álex'`)).user_id;
+  await como(alex, async () => {
+    const id = (await uno(`select public.admin_guardar_barbero(null, 'Marcos', 'Marcos@Llano.test') id`)).id;
+    const n = (await uno('select count(*)::int n from horarios where barbero_id = $1', [id])).n;
+    assert.equal(n, 12, 'copia el horario del primer barbero');
+    assert.ok((await uno('select public.catalogo() c')).c.barberos.some((b) => b.nombre === 'Marcos'));
+    await falla(`select public.admin_guardar_barbero(null, 'Otro', 'marcos@llano.test')`, [], 'EMAIL_REPETIDO');
+    await falla(`select public.admin_guardar_barbero(null, 'Otro', 'no-es-email')`, [], 'EMAIL_NO_VALIDO');
+
+    // Nadie se quita a sí mismo el admin ni se borra.
+    const yo = (await uno(`select id from barberos where user_id = $1`, [alex])).id;
+    await falla(`select public.admin_guardar_barbero($1, 'Álex', 'alex@llano.test', true, false)`, [yo], 'NO_A_TI_MISMO');
+    await falla(`select public.admin_borrar_barbero($1)`, [yo], 'NO_A_TI_MISMO');
+    await db.query(`select public.admin_guardar_barbero($1, 'Álex G.', 'alex@llano.test', true, true)`, [yo]);
+    assert.equal((await uno('select user_id from barberos where id = $1', [yo])).user_id, alex, 'mantiene su cuenta');
+    await db.query(`select public.admin_guardar_barbero($1, 'Álex', 'alex@llano.test', true, true)`, [yo]);
+
+    // Horario: sábado solo por la mañana, domingo cerrado; franjas solapadas no.
+    await falla(`select public.admin_guardar_horario($1, '[{"dia":1,"inicio":"09:00","fin":"13:00"},{"dia":1,"inicio":"12:00","fin":"14:00"}]')`, [id], 'FRANJAS_SOLAPADAS');
+    await falla(`select public.admin_guardar_horario($1, '[{"dia":1,"inicio":"13:00","fin":"09:00"}]')`, [id], 'HORARIO_NO_VALIDO');
+    await db.query(`select public.admin_guardar_horario($1, '[{"dia":6,"inicio":"10:00","fin":"14:00"}]')`, [id]);
+    assert.equal((await uno('select count(*)::int n from horarios where barbero_id = $1', [id])).n, 1);
+
+    // Con una cita futura no se puede dar de baja; sin citas se borra del todo.
+    await db.exec('reset role');
+    const cita = (await uno(`insert into citas (barbero_id, servicio_id, inicio, cliente_nombre) values ($1, 'corte', now() + interval '3 days', 'Cliente') returning id`, [id])).id;
+    await db.exec('set role authenticated');
+    await falla(`select public.admin_borrar_barbero($1)`, [id], 'TIENE_CITAS');
+    await falla(`select public.admin_guardar_barbero($1, 'Marcos', 'marcos@llano.test', false, false)`, [id], 'TIENE_CITAS');
+    await db.query(`select public.panel_estado_cita($1, 'cancelada')`, [cita]);
+    assert.equal((await uno(`select public.admin_borrar_barbero($1) r`, [id])).r, 'de_baja');
+    assert.ok(!(await uno('select public.catalogo() c')).c.barberos.some((b) => b.nombre === 'Marcos'));
+
+    const otro = (await uno(`select public.admin_guardar_barbero(null, 'Temporal') id`)).id;
+    assert.equal((await uno(`select public.admin_borrar_barbero($1) r`, [otro])).r, 'borrado');
+  });
+});
+
+test('gestión: la cuenta creada después se enlaza sola por el email', async () => {
+  const alex = (await uno(`select user_id from barberos where nombre = 'Álex'`)).user_id;
+  const id = await como(alex, async () => (await uno(`select public.admin_guardar_barbero(null, 'Iván', 'ivan@llano.test') id`)).id);
+  assert.equal((await uno('select user_id from barberos where id = $1', [id])).user_id, null);
+  const uid = await cuenta(null, 'IVAN@llano.test');
+  assert.equal((await uno('select user_id from barberos where id = $1', [id])).user_id, uid);
+  await como(uid, async () => {
+    assert.equal((await uno('select public.panel_yo() y')).y.yo.nombre, 'Iván');
+  });
+  await como(alex, () => db.query('select public.admin_borrar_barbero($1)', [id]));
+});
+
+test('gestión: ajustes de reserva', async () => {
+  const alex = (await uno(`select user_id from barberos where nombre = 'Álex'`)).user_id;
+  await como(alex, async () => {
+    await db.query('select public.admin_guardar_ajustes(30, 60, 45, 180, 2)');
+    assert.equal((await uno('select public.admin_datos() d')).d.ajustes.dias_max, 45);
+    await falla('select public.admin_guardar_ajustes(1, 60, 45, 180, 2)', [], 'VALOR_NO_VALIDO');
+    await db.query('select public.admin_guardar_ajustes(15, 120, 30, 120, 3)');
+  });
 });
